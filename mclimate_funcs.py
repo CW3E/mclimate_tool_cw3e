@@ -41,6 +41,7 @@ def compare_mclimate_to_forecast(fc, mclimate, varname):
         b_lst.append(new_ds)
         
     ds = xr.merge(b_lst)
+    ds = ds.assign_coords({"init_date": (fc.init_date)})
 
     return ds
 
@@ -70,12 +71,14 @@ def load_mclimate(mon, day, varname):
         day = 28
         
     ## load mclimate data
-    path_to_data = '/expanse/nfs/cw3e/cwp140/'      # project data -- read only
+    # path_to_data = '/expanse/nfs/cw3e/cwp140/'  # path on Expanse
+    path_to_data = '/data/projects/Comet/cwp140/' # path on Skyriver
     fname = path_to_data + 'preprocessed/{2}_mclimate/GEFSv12_reforecast_mclimate_{2}_{0}{1}.nc'.format(mon, day, varname)
     # print(fname_pattern)
     ds = xr.open_dataset(fname)
     # ds = ds.sortby("step") # sort by step (forecast lead)
     ds = ds.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
     ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(70., 10.))
+
 
     return ds
