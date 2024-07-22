@@ -139,7 +139,7 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     
     return ax
 
-def plot_mclimate_forecast(ds, fc, step):
+def plot_mclimate_forecast(ds, fc, step, varname):
     ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
     init_date = ts.strftime('%Y%m%d%H')
     # Set up projection
@@ -157,8 +157,8 @@ def plot_mclimate_forecast(ds, fc, step):
     # Create figure
     fig = plt.figure(figsize=(9.5, 6.25))
     fig.dpi = 300
-    # fname = 'figs/ivt_mclimate_{0}_F{1}'.format(init_date, step)
-    fname = 'figs/ivt_mclimate_F{1}'.format(init_date, step)
+    # fname = 'figs/{2}_mclimate_{0}_F{1}'.format(init_date, step, varname)
+    fname = 'figs/{0}_mclimate_F{1}'.format(varname, step)
     fmt = 'png'
     
     nrows = 3
@@ -181,14 +181,21 @@ def plot_mclimate_forecast(ds, fc, step):
     
     # Contour Filled (mclimate values)
     data = ds.sel(step=step).mclimate.values*100.
-    cmap, norm, bnds = ccmap.cmap('mclimate')
+    if varname == 'ivt':
+        cmap, norm, bnds = ccmap.cmap('mclimate')
+    elif varname == 'freezing_level':
+        cmap, norm, bnds = ccmap.cmap('mclimate_purple')
     cf = ax.contourf(lons, lats, data, transform=datacrs,
                      levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
     
     # Contour Lines (forecast values)
     forecast = fc.sel(step=step)
-    clevs = np.arange(250., 2100., 250.)
-    cs = ax.contour(lons, lats, forecast.ivt, transform=datacrs,
+    if varname == 'ivt':
+        clevs = np.arange(250., 2100., 250.)
+    elif varname == 'freezing_level':
+        clevs = np.arange(0., 6000., 500.)
+        
+    cs = ax.contour(lons, lats, forecast[varname], transform=datacrs,
                      levels=clevs, colors='k',
                      linewidths=0.75, linestyles='solid')
     plt.clabel(cs, **kw_clabels)

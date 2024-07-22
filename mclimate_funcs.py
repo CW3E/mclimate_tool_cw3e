@@ -77,7 +77,8 @@ def load_mclimate(mon, day, varname):
     # print(fname_pattern)
     ds = xr.open_dataset(fname)
     # ds = ds.sortby("step") # sort by step (forecast lead)
-    ds = ds.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
+    if varname == 'ivt':
+        ds = ds.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
     ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(70., 10.))
 
 
