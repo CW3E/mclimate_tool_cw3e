@@ -83,7 +83,7 @@ def create_html_table(ds, ext):
     
     ## create html table with max value within extent
     tmp = ds.sel(lat=slice(ext[2], ext[3]), lon=slice(ext[0], ext[1]))
-    maxval = tmp.max(dim=['lat', 'lon'])
+    maxval = tmp.max(dim=['lat', 'lon']).fillna(0)
     
     ## create list of valid dates
     ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H")
