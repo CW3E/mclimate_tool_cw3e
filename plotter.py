@@ -158,7 +158,7 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     fig = plt.figure(figsize=(9.5, 6.25))
     fig.dpi = 300
     # fname = 'figs/{2}_mclimate_{0}_F{1}'.format(init_date, step, varname)
-    fname = 'figs/{0}_mclimate_F{1}'.format(varname, step)
+    fname = 'figs/{0}_mclimate_F{1}'.format(varname, int(step))
     fmt = 'png'
     
     nrows = 3
@@ -193,7 +193,8 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     if varname == 'ivt':
         clevs = np.arange(250., 2100., 250.)
     elif varname == 'freezing_level':
-        clevs = np.arange(0., 6000., 500.)
+        clevs = np.arange(0., 18000., 1500.)
+        forecast[varname] = forecast[varname]*3.281 # convert to feet
         
     cs = ax.contour(lons, lats, forecast[varname], transform=datacrs,
                      levels=clevs, colors='k',
@@ -216,7 +217,7 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     valid_time = ts_valid.strftime('%HZ %d %b %Y')
     
     ax.set_title('Initialized: {0}'.format(init_time), loc='left', fontsize=10)
-    ax.set_title('F-{0} | Valid: {1}'.format(step, valid_time), loc='right', fontsize=10)
+    ax.set_title('F-{0} | Valid: {1}'.format(int(step), valid_time), loc='right', fontsize=10)
 
     
     txt = 'Relative to all 162-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date)

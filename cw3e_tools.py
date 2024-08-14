@@ -73,29 +73,33 @@ class load_GEFS_datasets:
         xarray dataset object with variables
     
     '''
-    def __init__(self, varname, fname=None):
+    def __init__(self, varname, fdate=None):
         path_to_data = '/data/downloaded/SCRATCH/cw3eit_scratch/'
         if varname == 'ivt':
             self.fpath = path_to_data + 'GEFS/FullFiles/'
         elif varname == 'freezing_level':
             self.fpath = path_to_data + 'GEFS/FreezingLevel/'
         
-        self.varname = varname
-        self.ensemble_name = 'GEFS'
-        self.datasize_min = 15.
-
-        if fname is not None:
-            self.fname = fname
-        if fname is None:          
+        if fdate is None:          
             ## find the most recent file in the currect directory
             list_of_files = glob.glob(self.fpath+'*.nc')
             self.fname = max(list_of_files, key=os.path.getctime)
-        
-        # pull the initialization date from the filename
-        regex = re.compile(r'\d+')
-        date_string = regex.findall(self.fname)
-        self.date_string = date_string[1]
+            
+            # pull the initialization date from the filename
+            regex = re.compile(r'\d+')
+            self.date_string = regex.findall(self.fname)[1]
 
+        if fdate is not None:
+            self.date_string = fdate
+        
+        if varname == 'ivt':
+            self.fname = self.fpath + 'IVT_Full_{0}.nc'.format(self.date_string)
+        elif varname == 'freezing_level':
+            self.fname = self.fpath + 'FZL_{0}.nc'.format(self.date_string)
+        
+        self.varname = varname
+        self.ensemble_name = 'GEFS'
+        self.datasize_min = 15.
         self.model_init_date = datetime.datetime.strptime(self.date_string, '%Y%m%d%H')
 
     def calc_vars(self):
@@ -105,8 +109,10 @@ class load_GEFS_datasets:
         if self.varname == 'ivt':
             ds = ds.rename({'IVT': 'ivt', 'forecast_hour': 'step'}) # need to rename this to match GEFSv12 Reforecast
             ds = ds.drop_vars(["uIVT", "vIVT"])
+            ds = ds.assign_coords({"init_date": (self.model_init_date)})
         elif self.varname == 'freezing_level':
             ds = ds.rename({'HGT_P1_L4_GLL0': 'freezing_level', 'forecast_time0': 'step', 'lat_0': 'lat', 'lon_0': 'lon', 'ensemble0': 'ensemble'}) # need to rename this to match GEFSv12 Reforecast
+            ds = ds.assign_coords({"init_date": (self.model_init_date)})
         
         ## modifications to file regardless of variable
         ds = ds.assign_coords({"lon": (((ds.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
@@ -160,6 +166,7 @@ class load_GFS_datasets:
                 # pull the initialization date from the filename
                 regex = re.compile(r'\d+')
                 self.date_string = regex.findall(self.fname)[1]
+                
             elif fdate is not None:
                 self.date_string = fdate
 
