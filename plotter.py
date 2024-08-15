@@ -8,6 +8,7 @@ Description: Functions for plotting
 
 import os, sys
 import numpy as np
+import itertools
 import xarray as xr
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -203,7 +204,10 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     
     # Add color bar
     cbax = plt.subplot(gs[1,0]) # colorbar axis
-    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', ticklocation = 'bottom')
+    cbarticks = [75., 90., 94., 95., 96., 97, 98, 99, 100.]
+    cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', ticklocation = 'bottom',
+                 ticks=cbarticks)
     cb.set_label('Model Climate Percentile Rank (xth)', fontsize=11)
     cb.ax.tick_params(labelsize=12)
     
