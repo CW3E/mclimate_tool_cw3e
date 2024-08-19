@@ -92,14 +92,14 @@ def create_html_table(ds, ext):
     init_time = ts.strftime('Initialized: %HZ %d %b %Y')
     col2 = []
     col3 = []
-    step_lst = ds.step.values
+    step_lst = ds.step.values.tolist()
     for i, step in enumerate(step_lst):
         ts_valid = ts + timedelta(hours=step)
         col2.append(ts_valid.strftime('%a %d'))
         col3.append(ts_valid.strftime('%HZ'))
 
     ## create multindex dataframe
-    arrays = [col2, col3, step_lst.astype('int')]
+    arrays = [col2, col3, step_lst]
     tuples = list(zip(*arrays))
     index = pd.MultiIndex.from_tuples(tuples, names=["Date", "Hour", "F"])
     ivt_vals = maxval.IVT.values*100
@@ -107,7 +107,7 @@ def create_html_table(ds, ext):
     
     ivt_str_lst = []
     fl_str_lst = []
-    for i, (ivt_val, fl_val, step_val) in enumerate(zip(ivt_vals.astype(int), fl_vals.astype(int), step_lst.astype('int'))):
+    for i, (ivt_val, fl_val, step_val) in enumerate(zip(ivt_vals.astype(int), fl_vals.astype(int), step_lst)):
         ivt_str = '{0};{1}'.format(ivt_val, step_val)
         ivt_str_lst.append(ivt_str)
         fl_str = '{0};{1}'.format(fl_val, step_val)
