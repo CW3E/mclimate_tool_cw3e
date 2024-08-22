@@ -47,19 +47,11 @@ def highlight_75(s, props=''):
 def highlight_0(s, props=''):
     # return np.where(s == 0, props, '')
     return np.where(s.str.contains('^0'), props, '')
-
-
-def make_clickable(init_date, step, mclimate_val):
-    fname = 'images/mclimate/ivt_mclimate_{0}_F{1}.png'.format(init_date, step)
-    string_arg = "image.src='{0}'".format(fname)
-    return '<a href="#image" onclick="{0}">{1}</a>'.format(string_arg, mclimate_val)
-    # return '<a href="#image" onclick="showImage("images/mclimate/ivt_mclimate_{0}_F{1}.png");">{2}</a>'.format(init_date, step, mclimate_val)
-
-    
+   
 def make_clickable_Z0(s):
     z0_val, step = s.split(";")
     z0_val = int(z0_val)
-    fname = 'images/freezing_level_mclimate_F{0}.png'.format(step)
+    fname = 'images/images_operational/freezing_level_mclimate_F{0}.png'.format(step)
     string_arg = "image.src='{0}'".format(fname)
     if z0_val >= 98:
         link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:white>{1}</a>'.format(string_arg, z0_val)
@@ -67,11 +59,10 @@ def make_clickable_Z0(s):
         link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, z0_val)
     return link
 
-
 def make_clickable_ivt(s):
     ivt_val, step = s.split(";")
     ivt_val = int(ivt_val)
-    fname = 'images/ivt_mclimate_F{0}.png'.format(step)
+    fname = 'images/images_operational/ivt_mclimate_F{0}.png'.format(step)
     string_arg = "image.src='{0}'".format(fname)
     if ivt_val >= 98:
         link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:white>{1}</a>'.format(string_arg, ivt_val)
@@ -79,6 +70,17 @@ def make_clickable_ivt(s):
         link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, ivt_val)
     return link
 
+def make_clickable_uv1000(s):
+    uv1000_val, step = s.split(";")
+    uv1000_val = int(uv1000_val)
+    fname = 'images/images_operational/uv1000_mclimate_F{0}.png'.format(step)
+    string_arg = "image.src='{0}'".format(fname)
+    if ivt_val >= 98:
+        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:white>{1}</a>'.format(string_arg, ivt_val)
+    else: 
+        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, ivt_val)
+    return link
+    
 def create_html_table(ds, ext):
     
     ## create html table with max value within extent
@@ -131,32 +133,39 @@ def create_html_table(ds, ext):
     # apply style formatting
     slice_ = ['IVT']
     slice2_ = ['Z0']
+
     df = df.style.format(make_clickable_ivt, escape="html", na_rep="NA", subset=slice_)\
            .format(make_clickable_Z0, escape="html", na_rep="NA", subset=slice2_)\
-           .apply(highlight_1, props='color:white;background-color: #004529;', axis=0, subset=slice_)\
-           .apply(highlight_99, props='color:white;background-color: #238443;', axis=0, subset=slice_)\
-           .apply(highlight_98, props='color:white;background-color: #006837;', axis=0, subset=slice_)\
-           .apply(highlight_97, props='color:black;background-color: #41ab5d', axis=0, subset=slice_)\
-           .apply(highlight_96, props='color:black;background-color: #78c679', axis=0, subset=slice_)\
-           .apply(highlight_95, props='color:black;background-color: #addd8e', axis=0, subset=slice_)\
-           .apply(highlight_90_94, props='color:black;background-color: #d9f0a3', axis=0, subset=slice_)\
-           .apply(highlight_75, props='color:black;background-color: #f7fcb9', axis=0, subset=slice_)\
-           .apply(highlight_0, props='color:black;background-color: #ffffe5', axis=0, subset=slice_)\
-           .apply(highlight_1, props='color:white;background-color: #4d004b;', axis=0, subset=slice2_)\
-           .apply(highlight_99, props='color:white;background-color: #810f7c;', axis=0, subset=slice2_)\
-           .apply(highlight_98, props='color:white;background-color: #88419d;', axis=0, subset=slice2_)\
-           .apply(highlight_97, props='color:black;background-color: #8c6bb1;', axis=0, subset=slice2_)\
-           .apply(highlight_96, props='color:black;background-color: #8c96c6;', axis=0, subset=slice2_)\
-           .apply(highlight_95, props='color:black;background-color: #9ebcda;', axis=0, subset=slice2_)\
-           .apply(highlight_90_94, props='color:black;background-color: #bfd3e6;', axis=0, subset=slice2_)\
-           .apply(highlight_75, props='color:black;background-color: #e0ecf4;', axis=0, subset=slice2_)\
-           .apply(highlight_0, props='color:black;background-color: #f7fcfd;', axis=0, subset=slice2_)\
+           .apply(highlight_1, props='color:white;background-color: #800026;', axis=0, subset=slice_)\
+           .apply(highlight_99, props='color:white;background-color: #bd0026;', axis=0, subset=slice_)\
+           .apply(highlight_98, props='color:white;background-color: #e31a1c;', axis=0, subset=slice_)\
+           .apply(highlight_97, props='color:black;background-color: #fc4e2a', axis=0, subset=slice_)\
+           .apply(highlight_96, props='color:black;background-color: #fd8d3c', axis=0, subset=slice_)\
+           .apply(highlight_95, props='color:black;background-color: #feb24c', axis=0, subset=slice_)\
+           .apply(highlight_90_94, props='color:black;background-color: #fed976', axis=0, subset=slice_)\
+           .apply(highlight_75, props='color:black;background-color: #ffeda0', axis=0, subset=slice_)\
+           .apply(highlight_0, props='color:black;background-color: #ffffcc', axis=0, subset=slice_)\
+           .apply(highlight_1, props='color:white;background-color: #004529;', axis=0, subset=slice2_)\
+           .apply(highlight_99, props='color:white;background-color: #238443;', axis=0, subset=slice2_)\
+           .apply(highlight_98, props='color:white;background-color: #006837;', axis=0, subset=slice2_)\
+           .apply(highlight_97, props='color:black;background-color: #41ab5d', axis=0, subset=slice2_)\
+           .apply(highlight_96, props='color:black;background-color: #78c679', axis=0, subset=slice2_)\
+           .apply(highlight_95, props='color:black;background-color: #addd8e', axis=0, subset=slice2_)\
+           .apply(highlight_90_94, props='color:black;background-color: #d9f0a3', axis=0, subset=slice2_)\
+           .apply(highlight_75, props='color:black;background-color: #f7fcb9', axis=0, subset=slice2_)\
+           .apply(highlight_0, props='color:black;background-color: #ffffe5', axis=0, subset=slice2_)\
            .set_table_styles([cell_hover, index_names])\
            .set_caption("{0}".format(init_time))
-           # .format(make_clickable_test, escape="html", na_rep="NA", subset=slice_)
-           # .format('<a href="#image" onclick="showImage("images/mclimate/ivt_mclimate_F6.png");">{0}</a>', escape="html", na_rep="NA")
-    
-           # .format(precision=0)\
+
+           # .apply(highlight_1, props='color:white;background-color: #4d004b;', axis=0, subset=slice3_)\
+           # .apply(highlight_99, props='color:white;background-color: #810f7c;', axis=0, subset=slice3_)\
+           # .apply(highlight_98, props='color:white;background-color: #88419d;', axis=0, subset=slice3_)\
+           # .apply(highlight_97, props='color:black;background-color: #8c6bb1;', axis=0, subset=slice3_)\
+           # .apply(highlight_96, props='color:black;background-color: #8c96c6;', axis=0, subset=slice3_)\
+           # .apply(highlight_95, props='color:black;background-color: #9ebcda;', axis=0, subset=slice3_)\
+           # .apply(highlight_90_94, props='color:black;background-color: #bfd3e6;', axis=0, subset=slice3_)\
+           # .apply(highlight_75, props='color:black;background-color: #e0ecf4;', axis=0, subset=slice3_)\
+           # .apply(highlight_0, props='color:black;background-color: #f7fcfd;', axis=0, subset=slice3_)\
     return df
 
 
