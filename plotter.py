@@ -140,7 +140,7 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     
     return ax
 
-def plot_mclimate_forecast(ds, fc, step, varname):
+def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50., 75.]):
     ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
     init_date = ts.strftime('%Y%m%d%H')
     # Set up projection
@@ -153,13 +153,9 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     dx = np.arange(lons.min().round(),lons.max().round()+10,10)
     dy = np.arange(lats.min().round(),lats.max().round()+10,10)
     
-    ext = [-170., -120., 40., 65.]
-    
     # Create figure
     fig = plt.figure(figsize=(9.5, 6.25))
     fig.dpi = 300
-    # fname = 'figs/{2}_mclimate_{0}_F{1}'.format(init_date, step, varname)
-    fname = 'figs/{0}_mclimate_F{1}'.format(varname, int(step))
     fmt = 'png'
     
     nrows = 3
@@ -180,23 +176,26 @@ def plot_mclimate_forecast(ds, fc, step, varname):
         
     ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=True, right_lats=False, bottom_lons=True)
     
+    ## set cmap and contour values based on varname
+    if varname == 'ivt':
+        cmap_name = 'mclimate_red'
+        clevs = np.arange(250., 2100., 250.)
+    elif varname == 'freezing_level':
+        cmap_name = 'mclimate_green'
+        clevs = np.arange(0., 60000., 1500.)
+        fc[varname] = fc[varname]*3.281 # convert to feet
+    elif varname == 'uv1000':
+        cmap_name = 'mclimate_purple'
+        clevs = np.arange(0., 55., 5.)
+    
     # Contour Filled (mclimate values)
     data = ds.sel(step=step).mclimate.values*100.
-    if varname == 'ivt':
-        cmap, norm, bnds = ccmap.cmap('mclimate')
-    elif varname == 'freezing_level':
-        cmap, norm, bnds = ccmap.cmap('mclimate_purple')
+    cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
     cf = ax.contourf(lons, lats, data, transform=datacrs,
                      levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
     
     # Contour Lines (forecast values)
-    forecast = fc.sel(step=step)
-    if varname == 'ivt':
-        clevs = np.arange(250., 2100., 250.)
-    elif varname == 'freezing_level':
-        clevs = np.arange(0., 18000., 1500.)
-        forecast[varname] = forecast[varname]*3.281 # convert to feet
-        
+    forecast = fc.sel(step=step)     
     cs = ax.contour(lons, lats, forecast[varname], transform=datacrs,
                      levels=clevs, colors='k',
                      linewidths=0.75, linestyles='solid')
@@ -204,11 +203,10 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     
     # Add color bar
     cbax = plt.subplot(gs[1,0]) # colorbar axis
-    cbarticks = [75., 90., 94., 95., 96., 97, 98, 99, 100.]
     cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
-    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', ticklocation = 'bottom',
-                 ticks=cbarticks)
-    cb.set_label('Model Climate Percentile Rank (xth)', fontsize=11)
+    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
+                  ticklocation = 'bottom', ticks=cbarticks)
+    cb.set_label(cbarlbl, fontsize=11)
     cb.ax.tick_params(labelsize=12)
     
     init_time = ts.strftime('%HZ %d %b %Y')
@@ -224,7 +222,7 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     ax.set_title('F-{0} | Valid: {1}'.format(int(step), valid_time), loc='right', fontsize=10)
 
     
-    txt = 'Relative to all 162-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date)
+    txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, step)
     ann_ax = fig.add_subplot(gs[-1, 0])
     ann_ax.axis('off')
     ann_ax.annotate(textwrap.fill(txt, 101), # this is the text
@@ -237,3 +235,103 @@ def plot_mclimate_forecast(ds, fc, step, varname):
     fig.savefig('%s.%s' %(fname, fmt), bbox_inches='tight', dpi=fig.dpi)
 
     plt.close(fig)
+
+def plot_mclimate_forecast_comparison(ds_lst, fc_lst, varname, fname, ext=[-170., -120., 40., 65.]):
+    # Set up projection
+    mapcrs = ccrs.Mercator()
+    # mapcrs = ccrs.PlateCarree()
+    datacrs = ccrs.PlateCarree()
+    
+    # Set tick/grid locations
+    lats = fc_lst[0].lat.values
+    lons = fc_lst[0].lon.values
+    dx = np.arange(lons.min().round(),lons.max().round()+10,10)
+    dy = np.arange(lats.min().round(),lats.max().round()+5,5)
+    
+    # Create figure
+    fig = plt.figure(figsize=(13, 5))
+    fig.dpi = 300
+    fmt = 'png'
+    
+    nrows = 1
+    ncols = 3
+    
+    # contour labels
+    kw_clabels = {'fontsize': 7, 'inline': True, 'inline_spacing': 7, 'fmt': '%i',
+                  'rightside_up': True, 'use_clabeltext': True}
+    
+    kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
+    
+    ## Use gridspec to set up a plot with a series of subplots that is
+    ## n-rows by n-columns
+    gs = GridSpec(nrows, ncols, height_ratios=[1], width_ratios = [1, 1, 0.05], wspace=0.001, hspace=0.05)
+    ## use gs[rows index, columns index] to access grids
+    
+    ###################
+    ### PLOT FIGURE ###
+    ###################
+    leftlats_lst = [True, False]
+    for i, (fc, ds) in enumerate(zip(fc_lst, ds_lst)):
+        ax = fig.add_subplot(gs[0, i], projection=mapcrs) 
+        ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=leftlats_lst[i], right_lats=False, bottom_lons=True)
+        
+        ## set cmap and contour values based on varname
+        if varname == 'ivt':
+            cmap_name = 'mclimate_red'
+            clevs = np.arange(250., 2100., 250.)
+        elif varname == 'freezing_level':
+            cmap_name = 'mclimate_green'
+            clevs = np.arange(0., 60000., 1500.)
+            fc[varname] = fc[varname]*3.281 # convert to feet
+        elif varname == 'uv1000':
+            cmap_name = 'mclimate_purple'
+            clevs = np.arange(0., 55., 5.)
+        
+        # Contour Filled
+        data = ds.mclimate.values*100.    
+        cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
+        cf = ax.contourf(ds.lon, ds.lat, data, transform=datacrs,
+                         levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
+        
+        # Contour Lines
+        cs = ax.contour(fc.lon, fc.lat, fc[varname], transform=datacrs,
+                         levels=clevs, colors='k',
+                         linewidths=0.75, linestyles='solid')
+        plt.clabel(cs, **kw_clabels)
+        
+        ts = pd.to_datetime(str(fc.init_date.values)) 
+        init_time = ts.strftime('%HZ %d %b %Y')
+        start_date = ts - timedelta(days=45)
+        start_date = start_date.strftime('%d-%b')
+        end_date = ts + timedelta(days=45)
+        end_date = end_date.strftime('%d-%b')
+        
+        ts = pd.to_datetime(str(fc.valid_time.values)) 
+        valid_time = ts.strftime('%HZ %d %b %Y')
+        
+        ax.set_title('Model Run: {0}'.format(init_time), loc='left', fontsize=10)
+        ax.set_title('Valid Date: {0}'.format(valid_time), loc='right', fontsize=10)
+    
+        
+        txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, fc.step.values)
+        ann_ax = fig.add_subplot(gs[-1, i])
+        ann_ax.axis('off')
+        ann_ax.annotate(textwrap.fill(txt, 60), # this is the text
+                   (0, 0.), # these are the coordinates to position the label
+                    textcoords="offset points", # how to position the text
+                    xytext=(25,-35), # distance from text to points (x,y)
+                    ha='left', # horizontal alignment can be left, right or center
+                    **kw_ticklabels)
+    
+    # Add color bar
+    cbax = plt.subplot(gs[0,-1]) # colorbar axis
+    cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'vertical', 
+                  ticklocation = 'right', ticks=cbarticks)
+    cb.set_label(cbarlbl, fontsize=10)
+    cb.ax.tick_params(labelsize=8)
+    
+    fig.savefig('%s.%s' %(fname, fmt), bbox_inches='tight', dpi=fig.dpi)
+    
+    # Show
+    plt.show()
