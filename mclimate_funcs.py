@@ -74,7 +74,7 @@ def load_reforecast(date, varname):
 
     return forecast
 
-def load_mclimate(mon, day, varname):
+def load_mclimate(mon, day, varname, server):
     if varname == 'UV1000':
         varname == 'uv1000'
     ## special circumstance for leap day
@@ -83,7 +83,10 @@ def load_mclimate(mon, day, varname):
         day = '28'
         
     ## load mclimate data
-    path_to_data = '/expanse/nfs/cw3e/cwp140/'      # project data -- read only
+    if server == 'skyriver':
+        path_to_data = '/home/dnash/comet_data/' # skyriver
+    elif server == 'expanse':
+        path_to_data = '/expanse/nfs/cw3e/cwp140/' # expanse 
     fname = path_to_data + 'preprocessed/{2}_mclimate/GEFSv12_reforecast_mclimate_{2}_{0}{1}.nc'.format(mon, day, varname)
     # print(fname_pattern)
     ds = xr.open_dataset(fname)
@@ -109,7 +112,7 @@ def load_archive_GEFS_forecast(date, varname):
                                   "time": "init_date"}) # need to rename this to match GEFSv12 Reforecast
     
     if varname == 'freezing_level':
-       forecast = forecast.rename({"gh": "freezing_level"})
+        forecast = forecast.rename({"gh": "freezing_level"})
     if varname == 'UV1000':
         uv = np.sqrt(forecast.u**2 + forecast.v**2)
         forecast = forecast.assign(uv=(['step', 'lat','lon'],uv.data))
@@ -124,19 +127,19 @@ def load_archive_GEFS_forecast(date, varname):
 
     return forecast
 
-def run_compare_mclimate_forecast(varname, fdate, model):
+def run_compare_mclimate_forecast(varname, fdate, model, server):
     ## load forecast data
     if model == 'GEFSv12_reforecast':
         forecast = load_reforecast(fdate, varname)
 
     elif model == 'GFS':
         ## using operational GFS data
-        s = ctools.load_GFS_datasets(varname, fdate='2024072212') ## need to set date to what I have copied to personal dir
+        s = ctools.load_GFS_datasets(varname, fdate) ## need to set date to what I have copied to personal dir
         forecast = s.calc_vars()
 
     elif model == 'GEFS':
         ## using operational GEFS data
-        s = ctools.load_GEFS_datasets(varname)
+        s = ctools.load_GEFS_datasets(varname, fdate)
         forecast = s.calc_vars()
 
     elif model == 'GEFS_archive':
@@ -149,7 +152,7 @@ def run_compare_mclimate_forecast(varname, fdate, model):
     print(mon, day)
     
     ## load mclimate data based on the initialization date
-    mclimate = load_mclimate(mon, day, varname)
+    mclimate = load_mclimate(mon, day, varname, server)
 
     if (model == 'GEFS') | (model == 'GEFS_archive'):
         ## regrid/interpolate data to all have same grid size

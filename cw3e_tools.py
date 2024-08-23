@@ -123,6 +123,7 @@ class load_GEFS_datasets:
                162, 168])
 
         ds = ds.sel(step=step) # select the forecast hour steps we are interested in
+        ds = ds.assign_coords({"step": (step.astype(int))}) # swap step to int
         ds = ds.mean('ensemble') # create ensemble mean
 
         return ds
