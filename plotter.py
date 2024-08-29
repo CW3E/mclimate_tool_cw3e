@@ -141,6 +141,10 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     return ax
 
 def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50., 75.]):
+    ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+    fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+    if varname == 'uv1000':
+        varname = 'uv'
     ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
     init_date = ts.strftime('%Y%m%d%H')
     # Set up projection
@@ -150,12 +154,19 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
     # Set tick/grid locations
     lats = ds.lat.values
     lons = ds.lon.values
-    dx = np.arange(lons.min().round(),lons.max().round()+10,10)
-    dy = np.arange(lats.min().round(),lats.max().round()+10,10)
+    if ext == [-170., -120., 40., 65.]:
+        dx = [-160, -150, -140, -130]
+        dy = [45., 50., 55., 60.]
+    elif ext == [-141., -130., 54., 60.]:
+        dx = [-140, -135, -130]
+        dy = [54., 56., 58., 60.]
+    else:
+        dx = np.arange(lons.min().round(),lons.max().round()+10,10)
+        dy = np.arange(lats.min().round(),lats.max().round()+10,10)
     
     # Create figure
     fig = plt.figure(figsize=(9.5, 6.25))
-    fig.dpi = 300
+    fig.dpi = 600
     fmt = 'png'
     
     nrows = 3
@@ -182,17 +193,19 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
         clevs = np.arange(250., 2100., 250.)
     elif varname == 'freezing_level':
         cmap_name = 'mclimate_green'
-        clevs = np.arange(0., 60000., 1500.)
+        clevs = np.arange(0., 60000., 2000.)
         fc[varname] = fc[varname]*3.281 # convert to feet
-    elif varname == 'uv1000':
+    elif varname == 'uv':
         cmap_name = 'mclimate_purple'
         clevs = np.arange(0., 55., 5.)
     
     # Contour Filled (mclimate values)
     data = ds.sel(step=step).mclimate.values*100.
     cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
-    cf = ax.contourf(lons, lats, data, transform=datacrs,
-                     levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
+    cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                       cmap=cmap, norm=norm, alpha=0.9)
+    # cf = ax.contourf(lons, lats, data, transform=datacrs,
+    #                  levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
     
     # Contour Lines (forecast values)
     forecast = fc.sel(step=step)     
@@ -237,6 +250,8 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
     plt.close(fig)
 
 def plot_mclimate_forecast_comparison(ds_lst, fc_lst, varname, fname, ext=[-170., -120., 40., 65.]):
+    if varname == 'uv1000':
+        varname = 'uv'
     # Set up projection
     mapcrs = ccrs.Mercator()
     # mapcrs = ccrs.PlateCarree()
@@ -281,17 +296,19 @@ def plot_mclimate_forecast_comparison(ds_lst, fc_lst, varname, fname, ext=[-170.
             clevs = np.arange(250., 2100., 250.)
         elif varname == 'freezing_level':
             cmap_name = 'mclimate_green'
-            clevs = np.arange(0., 60000., 1500.)
+            clevs = np.arange(0., 60000., 2000.)
             fc[varname] = fc[varname]*3.281 # convert to feet
-        elif varname == 'uv1000':
+        elif varname == 'uv':
             cmap_name = 'mclimate_purple'
             clevs = np.arange(0., 55., 5.)
         
         # Contour Filled
         data = ds.mclimate.values*100.    
         cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
-        cf = ax.contourf(ds.lon, ds.lat, data, transform=datacrs,
-                         levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
+        # cf = ax.contourf(ds.lon, ds.lat, data, transform=datacrs,
+        #                  levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
+        cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                       cmap=cmap, norm=norm, alpha=0.9)
         
         # Contour Lines
         cs = ax.contour(fc.lon, fc.lat, fc[varname], transform=datacrs,

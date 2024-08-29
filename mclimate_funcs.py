@@ -12,6 +12,8 @@ import pandas as pd
 import cw3e_tools as ctools
 
 def compare_mclimate_to_forecast(fc, mclimate, varname):
+    if varname == 'uv1000':
+        varname = 'uv'
     ## compare IVT forecast to mclimate
     b_lst = []
     quant_lst = [0.  , 0.75, 0.9 , 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.  ]
@@ -59,11 +61,12 @@ def load_reforecast(date, varname):
     if varname == 'ivt':
         forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 'time': 'init_date'}) # need to rename this to match GEFSv12 Reforecast mclimate
         forecast = forecast.drop_vars(["ivtu", "ivtv"])
-    elif varname == 'UV1000':
+    elif varname == 'uv1000':
         forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
         uv = np.sqrt(forecast.u**2 + forecast.v**2)
         forecast = forecast.assign(uv=(['number', 'step', 'lat','lon'],uv.data))
         forecast = forecast.drop_vars(["u", "v"])
+        forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
     else:
         forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
         
@@ -91,7 +94,7 @@ def load_mclimate(mon, day, varname, server):
     # print(fname_pattern)
     ds = xr.open_dataset(fname)
     # ds = ds.sortby("step") # sort by step (forecast lead)
-    if varname == 'ivt':
+    if (varname == 'ivt') | (varname == 'uv1000'):
         ds = ds.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
     else:
         ds = ds
@@ -105,6 +108,8 @@ def load_archive_GEFS_forecast(date, varname):
     ### load forecast from GEFS
     if varname == 'ivt':
         varname = 'IVT'
+    elif varname == 'uv1000':
+        varname = 'UV1000'
     
     fname_pattern = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f*.{1}'.format(date, varname)
     forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
