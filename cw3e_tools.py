@@ -189,13 +189,14 @@ class load_GFS_datasets:
                 self.date_string = regex.findall(self.fpath)[-1]
             elif fdate is not None:
                 self.date_string = fdate
+                self.fpath = '/data/downloaded/Forecasts/GFS_025d/{0}/{1}'.format(year, self.date_string)
             fname_lst = []
             for i, F in enumerate(self.F_lst):
                 fname = '/gfs_{0}_f{1}.grb'.format(self.date_string, str(F).zfill(3))
 
                 ## for now: copy the files to local space
                 repo_path = '/home/dnash/comet_data/tmp'
-                # shutil.copy(self.fpath+fname, repo_path+fname) # copy file over to data folder
+                shutil.copy(self.fpath+fname, repo_path+fname) # copy file over to data folder
                 fname_lst.append(repo_path+fname)      
             self.fname_lst = fname_lst
 

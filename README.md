@@ -2,7 +2,7 @@
 
 ---
 
-This repository runs calculations and plots for the GFS Mclimate Tool. Plot types include IVT Mclimate and Freezing Level Mclimate for GFS.
+This repository runs calculations and plots for the AR Impact Tool. Plot types include IVT M-Climate and Freezing Level M-Climate for GEFS.
 
 Current capabilities include the Southeast Alaska region.
 

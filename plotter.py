@@ -141,8 +141,16 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     return ax
 
 def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50., 75.]):
-    ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
-    fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+    ls = ds.isel(lat=0).lat.values
+    le = ds.isel(lat=-1).lat.values
+
+    if ls < le:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+    else:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+
     if varname == 'uv1000':
         varname = 'uv'
     ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
@@ -206,13 +214,14 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
                        cmap=cmap, norm=norm, alpha=0.9)
     # cf = ax.contourf(lons, lats, data, transform=datacrs,
     #                  levels=bnds, cmap=cmap, norm=norm, alpha=0.9, extend='neither')
-    
+
     # Contour Lines (forecast values)
     forecast = fc.sel(step=step)     
     cs = ax.contour(lons, lats, forecast[varname], transform=datacrs,
                      levels=clevs, colors='k',
                      linewidths=0.75, linestyles='solid')
     plt.clabel(cs, **kw_clabels)
+
     
     # Add color bar
     cbax = plt.subplot(gs[1,0]) # colorbar axis
