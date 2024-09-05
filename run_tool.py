@@ -85,8 +85,8 @@ df_html = df.to_html(index=False, formatters={'Hour': lambda x: '<b>' + x + '</b
 print('...Writing HTML file')
 out_fname = "/data/projects/website/mirror/htdocs/Projects/MClimate/mclimate_tool_operational.html"
 
-with open('data/html_text.txt', mode='r') as in_file, \
-     open('data/html_text2.txt', mode='r') as in_file2, \
+with open('out/html_text.txt', mode='r') as in_file, \
+     open('out/html_text2.txt', mode='r') as in_file2, \
      open(out_fname, mode='w') as out_file:
 
     # A file is iterable
