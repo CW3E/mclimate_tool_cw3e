@@ -1,0 +1,7 @@
+  </div>
+  <div class="column right">
+    <span class="image fit"><img id="image" src="images/images_operational/ivt_mclimate_F6.png" alt="" /></span>
+  </div>
+</div>
+</body>
+</html>

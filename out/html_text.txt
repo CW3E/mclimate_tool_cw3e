@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+<div class="navbar">
+  <a href="mclimate_tool_operational.html">Operational Forecast</a>
+  <div class="dropdown">
+  <button class="dropbtn" onclick="myFunction()">Historical Cases
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-content" id="myDropdown">
+    <a href="mclimate_tool_historical_20051124.html">24 November 2005</a>
+    <a href="mclimate_tool_historical_20150818.html">18 August 2015</a>
+    <a href="mclimate_tool_historical_20201202.html">2 December 2020</a>
+    <a href="mclimate_tool_historical_20231120.html">20 November 2023</a>
+  </div>
+  </div>
+</div>
+<script src="myscripts.js"></script>
+
+<!-- About -->
+<section>
+    <h2> Atmospheric River Impact Tool </h2>
+    <p><em>Supported by the National Science Foundation Coastlines and People Program: #2052972</em></p>
+    <h3>Model Climate: How does this forecast compare to past forecasts with similar lead time?</h3>
+    <p>This Model Climate (M-Climate) is generated based on NOAA’s Global Ensemble Forecast System, version 12 (GEFSv12) reforecast data (2000-2019), for integrated water vapor transport (IVT) and Freezing Level (Z0). This places important forecast elements in the context of reforecasts with the same lead time and at similar times of year. For example, large M-Climate Percentile Rank IVT values indicate GEFS ensemble mean IVT values are large for a given lead time. </p>
+    
+    <p>The table on the left is showing the maximum M-Climate Percentile Rank for IVT and Freezing Level near Southeast Alaska (54.5&deg;N to 60&deg; and 130&deg;W to 140&deg;W) every 6 hours from the initialization time indicated at the top of the table. Each cell can be clicked on to display the corresponding map. The maps on the right are showing the M-Climate percentile rank for IVT (red shading) or Freezing Level (green shading). The contours indicate the forecast IVT (kg m<sup>-1</sup> s<sup>-1</sup>) or Freezing Level (feet) for that initialization date and lead time. </p>
+    
+    <p>To view the M-Climate ranks for notable storms, click 'Historical Cases' and then select the date you are interested in. Each of these notable storms resulted in widespread impacts, such as landslides and floods. </p>
+</section>
+<div class="row">
+  <div class="column left">
+<!-- insert table here -->

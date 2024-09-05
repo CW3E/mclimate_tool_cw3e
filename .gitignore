@@ -35,7 +35,6 @@
 *.e*
 *.o*
 rsl*
-*.txt
 core.*
 
 # OS generated files #
