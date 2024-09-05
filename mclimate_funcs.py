@@ -87,7 +87,7 @@ def load_mclimate(mon, day, varname, server):
         
     ## load mclimate data
     if server == 'skyriver':
-        path_to_data = '/data/projects/operations/GEFS_mclimate/data/' # skyriver
+        path_to_data = '/data/projects/operations/GEFS_Mclimate/data/' # skyriver
     elif server == 'expanse':
         path_to_data = '/expanse/nfs/cw3e/cwp140/preprocessed/' # expanse 
     fname = path_to_data + '{2}_mclimate/GEFSv12_reforecast_mclimate_{2}_{0}{1}.nc'.format(mon, day, varname)
