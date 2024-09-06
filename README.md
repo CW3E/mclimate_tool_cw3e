@@ -14,7 +14,7 @@ To run all three regions with a singularity container:
 
 ```bash
 ## runs plots for GEFS
-singularity exec --bind /data:/data,/home:/home,/work:/work,/common:/common -e /data/projects/operations/GEFS_Mclimate/envs/GEFS_Mclimate.sif /opt/conda/bin/python /data/projects/operations/GEFS_Mclimate/run_tool.py
+singularity exec --bind /data:/data,/home:/home,/work:/work,/common:/common -e /data/projects/operations/GEFS_Mclimate/envs/GEFS_Mclimate.sif /opt/conda/envs/container/bin/python /data/projects/operations/GEFS_Mclimate/run_tool.py
 ```
 
 ## References

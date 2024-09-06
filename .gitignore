@@ -93,4 +93,4 @@ auxhist*
 # other #
 ##########
 .ipynb_checkpoints/*
-out/.ipynb_checkpoints/*
+*/.ipynb_checkpoints/*
