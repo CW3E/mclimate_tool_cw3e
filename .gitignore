@@ -36,6 +36,7 @@
 *.o*
 rsl*
 core.*
+.ncdu_output/*
 
 # OS generated files #
 ######################
