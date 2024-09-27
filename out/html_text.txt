@@ -6,7 +6,16 @@
 </head>
 <body>
 <div class="navbar">
-  <a href="mclimate_tool_operational.html">Operational Forecast</a>
+  <div class="dropdown">
+  <button class="dropbtn" onclick="myFunction()">Operational Forecast
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-content" id="myDropdown">
+    <a href="mclimate_tool_operational.html">North Pacific Operational</a>
+    <a href="mclimate_tool_operational_SEAK.html">Southeast Alaska Operational</a>
+  </div>
+  </div>
+
   <div class="dropdown">
   <button class="dropbtn" onclick="myFunction()">Historical Cases
     <i class="fa fa-caret-down"></i>

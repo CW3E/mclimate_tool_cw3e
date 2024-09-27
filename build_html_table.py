@@ -75,14 +75,25 @@ def make_clickable_uv1000(s):
     uv1000_val = int(uv1000_val)
     fname = 'images/images_operational/uv1000_mclimate_F{0}.png'.format(step)
     string_arg = "image.src='{0}'".format(fname)
-    if ivt_val >= 98:
-        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:white>{1}</a>'.format(string_arg, ivt_val)
+    if uv1000_val >= 98:
+        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:white>{1}</a>'.format(string_arg, uv1000_val)
     else: 
-        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, ivt_val)
+        link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, uv1000_val)
+    return link
+
+def make_clickable_F(s):
+    domain, step = s.split(";")
+    fname = 'images/images_operational/{1}_mclimate_F{0}.png'.format(step, domain)
+    string_arg = "image.src='{0}'".format(fname)
+    link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, step)
     return link
     
-def create_html_table(ds, ext):
-    
+def create_html_table(ds, domain):
+    if domain == 'SEAK':
+        ext = [-141., -130., 54., 60.]
+    else:
+        ext = [-170., -120., 40., 65.]
+        
     ## create html table with max value within extent
     tmp = ds.sel(lat=slice(ext[2], ext[3]), lon=slice(ext[0], ext[1]))
     maxval = tmp.max(dim=['lat', 'lon']).fillna(0)
@@ -100,25 +111,23 @@ def create_html_table(ds, ext):
         col2.append(ts_valid.strftime('%a %d'))
         col3.append(ts_valid.strftime('%HZ'))
 
-    ## create multindex dataframe
-    arrays = [col2, col3, step_lst]
-    tuples = list(zip(*arrays))
-    index = pd.MultiIndex.from_tuples(tuples, names=["Date", "Hour", "F"])
-    ivt_vals = maxval.IVT.values*100
-    fl_vals = maxval.freezing_level.values*100
-    
-    ivt_str_lst = []
-    fl_str_lst = []
-    for i, (ivt_val, fl_val, step_val) in enumerate(zip(ivt_vals.astype(int), fl_vals.astype(int), step_lst)):
-        ivt_str = '{0};{1}'.format(ivt_val, step_val)
-        ivt_str_lst.append(ivt_str)
-        fl_str = '{0};{1}'.format(fl_val, step_val)
-        fl_str_lst.append(fl_str)
+    str_lst = []
+    for i, step_val in enumerate(step_lst):
+        row_str = '{0};{1}'.format(domain, step_val)
+        str_lst.append(row_str)
         
-    
-    # data = {'IVT': ivt_vals.astype(int)}
-    data = {'IVT': ivt_str_lst,
-            'Z0': fl_str_lst}
+    ## create multindex dataframe
+    arrays = [col2, col3]
+    tuples = list(zip(*arrays))
+    index = pd.MultiIndex.from_tuples(tuples, names=["Date", "Hour"])
+    ivt_vals = maxval.ivt.values*100
+    fl_vals = maxval.freezing_level.values*100
+    uv_vals = maxval.uv.values*100
+        
+    data = {'F': str_lst,
+            'IVT': [f"{num:.0f}" for num in ivt_vals],
+            'Z0': [f"{num:.0f}" for num in fl_vals],
+            'UV': [f"{num:.0f}" for num in uv_vals]}
     df = pd.DataFrame(data, index=index)
     
     ## get class values based on IVT values
@@ -133,39 +142,41 @@ def create_html_table(ds, ext):
     # apply style formatting
     slice_ = ['IVT']
     slice2_ = ['Z0']
+    slice3_ = ['UV']
+    sliceF_ = ['F']
 
-    df = df.style.format(make_clickable_ivt, escape="html", na_rep="NA", subset=slice_)\
-           .format(make_clickable_Z0, escape="html", na_rep="NA", subset=slice2_)\
-           .apply(highlight_1, props='color:white;background-color: #800026;', axis=0, subset=slice_)\
-           .apply(highlight_99, props='color:white;background-color: #bd0026;', axis=0, subset=slice_)\
-           .apply(highlight_98, props='color:white;background-color: #e31a1c;', axis=0, subset=slice_)\
-           .apply(highlight_97, props='color:black;background-color: #fc4e2a', axis=0, subset=slice_)\
-           .apply(highlight_96, props='color:black;background-color: #fd8d3c', axis=0, subset=slice_)\
-           .apply(highlight_95, props='color:black;background-color: #feb24c', axis=0, subset=slice_)\
-           .apply(highlight_90_94, props='color:black;background-color: #fed976', axis=0, subset=slice_)\
-           .apply(highlight_75, props='color:black;background-color: #ffeda0', axis=0, subset=slice_)\
-           .apply(highlight_0, props='color:black;background-color: #ffffcc', axis=0, subset=slice_)\
-           .apply(highlight_1, props='color:white;background-color: #004529;', axis=0, subset=slice2_)\
-           .apply(highlight_99, props='color:white;background-color: #238443;', axis=0, subset=slice2_)\
-           .apply(highlight_98, props='color:white;background-color: #006837;', axis=0, subset=slice2_)\
-           .apply(highlight_97, props='color:black;background-color: #41ab5d', axis=0, subset=slice2_)\
-           .apply(highlight_96, props='color:black;background-color: #78c679', axis=0, subset=slice2_)\
-           .apply(highlight_95, props='color:black;background-color: #addd8e', axis=0, subset=slice2_)\
-           .apply(highlight_90_94, props='color:black;background-color: #d9f0a3', axis=0, subset=slice2_)\
-           .apply(highlight_75, props='color:black;background-color: #f7fcb9', axis=0, subset=slice2_)\
-           .apply(highlight_0, props='color:black;background-color: #ffffe5', axis=0, subset=slice2_)\
+    df = df.style.format(make_clickable_F, escape="html", na_rep="NA", subset=sliceF_)\
+           .apply(highlight_1, props='color:white;background-color: #800026;', axis=0, subset=slice2_)\
+           .apply(highlight_99, props='color:white;background-color: #bd0026;', axis=0, subset=slice2_)\
+           .apply(highlight_98, props='color:white;background-color: #e31a1c;', axis=0, subset=slice2_)\
+           .apply(highlight_97, props='color:black;background-color: #fc4e2a', axis=0, subset=slice2_)\
+           .apply(highlight_96, props='color:black;background-color: #fd8d3c', axis=0, subset=slice2_)\
+           .apply(highlight_95, props='color:black;background-color: #feb24c', axis=0, subset=slice2_)\
+           .apply(highlight_90_94, props='color:black;background-color: #fed976', axis=0, subset=slice2_)\
+           .apply(highlight_75, props='color:black;background-color: #ffeda0', axis=0, subset=slice2_)\
+           .apply(highlight_0, props='color:black;background-color: #ffffcc', axis=0, subset=slice2_)\
+           .apply(highlight_1, props='color:white;background-color: #004529;', axis=0, subset=slice_)\
+           .apply(highlight_99, props='color:white;background-color: #238443;', axis=0, subset=slice_)\
+           .apply(highlight_98, props='color:white;background-color: #006837;', axis=0, subset=slice_)\
+           .apply(highlight_97, props='color:black;background-color: #41ab5d', axis=0, subset=slice_)\
+           .apply(highlight_96, props='color:black;background-color: #78c679', axis=0, subset=slice_)\
+           .apply(highlight_95, props='color:black;background-color: #addd8e', axis=0, subset=slice_)\
+           .apply(highlight_90_94, props='color:black;background-color: #d9f0a3', axis=0, subset=slice_)\
+           .apply(highlight_75, props='color:black;background-color: #f7fcb9', axis=0, subset=slice_)\
+           .apply(highlight_0, props='color:black;background-color: #ffffe5', axis=0, subset=slice_)\
+           .apply(highlight_1, props='color:white;background-color: #4d004b;', axis=0, subset=slice3_)\
+           .apply(highlight_99, props='color:white;background-color: #810f7c;', axis=0, subset=slice3_)\
+           .apply(highlight_98, props='color:white;background-color: #88419d;', axis=0, subset=slice3_)\
+           .apply(highlight_97, props='color:black;background-color: #8c6bb1;', axis=0, subset=slice3_)\
+           .apply(highlight_96, props='color:black;background-color: #8c96c6;', axis=0, subset=slice3_)\
+           .apply(highlight_95, props='color:black;background-color: #9ebcda;', axis=0, subset=slice3_)\
+           .apply(highlight_90_94, props='color:black;background-color: #bfd3e6;', axis=0, subset=slice3_)\
+           .apply(highlight_75, props='color:black;background-color: #e0ecf4;', axis=0, subset=slice3_)\
+           .apply(highlight_0, props='color:black;background-color: #f7fcfd;', axis=0, subset=slice3_)\
            .set_table_styles([cell_hover, index_names])\
            .set_caption("{0}".format(init_time))
 
-           # .apply(highlight_1, props='color:white;background-color: #4d004b;', axis=0, subset=slice3_)\
-           # .apply(highlight_99, props='color:white;background-color: #810f7c;', axis=0, subset=slice3_)\
-           # .apply(highlight_98, props='color:white;background-color: #88419d;', axis=0, subset=slice3_)\
-           # .apply(highlight_97, props='color:black;background-color: #8c6bb1;', axis=0, subset=slice3_)\
-           # .apply(highlight_96, props='color:black;background-color: #8c96c6;', axis=0, subset=slice3_)\
-           # .apply(highlight_95, props='color:black;background-color: #9ebcda;', axis=0, subset=slice3_)\
-           # .apply(highlight_90_94, props='color:black;background-color: #bfd3e6;', axis=0, subset=slice3_)\
-           # .apply(highlight_75, props='color:black;background-color: #e0ecf4;', axis=0, subset=slice3_)\
-           # .apply(highlight_0, props='color:black;background-color: #f7fcfd;', axis=0, subset=slice3_)\
+
     return df
 
 

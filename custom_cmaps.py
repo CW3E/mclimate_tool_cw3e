@@ -24,7 +24,7 @@ custom_cmaps =    {
                             [0.000, 0.271, 0.161]], # 100 - 101.
                         "bounds":[75., 90., 94., 95., 96., 97., 98., 99., 100., 101.],
                         "ticks":[75., 90., 94., 95., 96., 97., 98., 99., 100.],
-                        "label": 'Model Climate Percentile Rank (xth)',
+                        "label": 'IVT Percentile Rank (xth)',
                         },
     
                 "mclimate_purple" :{
@@ -40,7 +40,7 @@ custom_cmaps =    {
                             [0.000, 0.000, 0.000]], # 99.9 - 100.
                         "bounds":[75., 90., 94., 95., 96., 97., 98., 99., 100., 101.],
                         "ticks":[75., 90., 94., 95., 96., 97., 98., 99., 100.],
-                        "label": 'Model Climate Percentile Rank (xth)',
+                        "label": '1000 hPa Wind Percentile Rank (xth)',
                         },
             "mclimate_red" :{
                         "colors":[
@@ -55,7 +55,7 @@ custom_cmaps =    {
                             [128,0,38]],
                         "bounds":[75., 90., 94., 95., 96., 97., 98., 99., 100., 101.],
                         "ticks":[75., 90., 94., 95., 96., 97., 98., 99., 100.],
-                        "label": 'Model Climate Percentile Rank (xth)',
+                        "label": 'Freezing Level Percentile Rank (xth)',
                         }
 }
 
