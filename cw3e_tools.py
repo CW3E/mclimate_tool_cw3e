@@ -55,6 +55,21 @@ def get_every_other_vector(x):
 def myround(x, base=5):
     return base * round(x/base)
 
+def load_intermediate_GEFS(varname):
+    if varname == 'freezing_level':
+        varname1 = "uv"
+    elif varname == 'uv1000':
+        varname1 = 'freezing_level'
+    ## load intermediate data
+    filename_pattern = '/data/projects/operations/GEFS_Mclimate/data/tmp/tmp_GEFS_*.nc'
+    ds = xr.open_mfdataset(filename_pattern, combine='nested', concat_dim='step', drop_variables=[varname1] )
+    ds = ds.sortby('step')
+    # Convert to hours
+    ds['step'] = (ds['step'] / pd.Timedelta(hours=1)).astype(int)
+    ds = ds.load()
+    
+    return ds
+
 class load_GEFS_datasets:
     '''
     Loads IVT of freezing level from GEFS

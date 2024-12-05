@@ -78,8 +78,6 @@ def load_reforecast(date, varname):
     return forecast
 
 def load_mclimate(mon, day, varname, server):
-    if varname == 'UV1000':
-        varname == 'uv1000'
     ## special circumstance for leap day
     if (mon == '02') & (day == '29'):
         mon = '02'
@@ -142,10 +140,13 @@ def run_compare_mclimate_forecast(varname, fdate, model, server):
         s = ctools.load_GFS_datasets(varname, fdate) ## need to set date to what I have copied to personal dir
         forecast = s.calc_vars()
 
-    elif model == 'GEFS':
+    elif (model == 'GEFS') & (varname == 'ivt'):
         ## using operational GEFS data
         s = ctools.load_GEFS_datasets(varname, fdate)
         forecast = s.calc_vars()
+        
+    elif (model == 'GEFS') & (varname != 'ivt'):
+        forecast = ctools.load_intermediate_GEFS(varname)
 
     elif model == 'GEFS_archive':
         forecast = load_archive_GEFS_forecast(fdate, varname)

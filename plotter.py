@@ -140,7 +140,20 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     
     return ax
 
-def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50., 75.]):
+def plot_mclimate_forecast(ds, fc, step, varname, fname, ext_name='NPAC'):
+
+    if ext_name == 'NPAC':
+        ext = [-170., -120., 40., 65.]
+        dx = [-160, -150, -140, -130]
+        dy = [45., 50., 55., 60.]
+    elif ext_name == 'SEAK':
+        ext = [-141., -130., 54., 60.]
+        dx = [-140, -135, -130]
+        dy = [54., 56., 58., 60.]
+    # else:
+    #     dx = np.arange(lons.min().round(),lons.max().round()+10,10)
+    #     dy = np.arange(lats.min().round(),lats.max().round()+10,10)
+    
     ls = ds.isel(lat=0).lat.values
     le = ds.isel(lat=-1).lat.values
 
@@ -150,6 +163,10 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
     else:
         ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
         fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+        
+    # Set tick/grid locations
+    lats = ds.lat.values
+    lons = ds.lon.values
 
     if varname == 'uv1000':
         varname = 'uv'
@@ -158,19 +175,6 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
     # Set up projection
     mapcrs = ccrs.PlateCarree()
     datacrs = ccrs.PlateCarree()
-    
-    # Set tick/grid locations
-    lats = ds.lat.values
-    lons = ds.lon.values
-    if ext == [-170., -120., 40., 65.]:
-        dx = [-160, -150, -140, -130]
-        dy = [45., 50., 55., 60.]
-    elif ext == [-141., -130., 54., 60.]:
-        dx = [-140, -135, -130]
-        dy = [54., 56., 58., 60.]
-    else:
-        dx = np.arange(lons.min().round(),lons.max().round()+10,10)
-        dy = np.arange(lats.min().round(),lats.max().round()+10,10)
     
     # Create figure
     fig = plt.figure(figsize=(9.5, 6.25))
@@ -197,10 +201,10 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext=[-170., -120., 50.,
     
     ## set cmap and contour values based on varname
     if varname == 'ivt':
-        cmap_name = 'mclimate_red'
+        cmap_name = 'mclimate_green'
         clevs = np.arange(250., 2100., 250.)
     elif varname == 'freezing_level':
-        cmap_name = 'mclimate_green'
+        cmap_name = 'mclimate_red'
         clevs = np.arange(0., 60000., 2000.)
         fc[varname] = fc[varname]*3.281 # convert to feet
     elif varname == 'uv':

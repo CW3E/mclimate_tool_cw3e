@@ -83,15 +83,14 @@ def make_clickable_uv1000(s):
 
 def make_clickable_F(s):
     domain, step = s.split(";")
-    fname = 'images/images_operational/{1}_mclimate_F{0}.png'.format(step, domain)
-    string_arg = "image.src='{0}'".format(fname)
-    link = '<a href="#image" onclick="{0}" style=text-decoration:none;color:black>{1}</a>'.format(string_arg, step)
+    domain = "'{0}'".format(domain)
+    link = '<a onclick="changeImg(this)" style=text-decoration:none;color:black>{0}</a>'.format(step)
     return link
     
 def create_html_table(ds, domain):
     if domain == 'SEAK':
         ext = [-141., -130., 54., 60.]
-    else:
+    elif domain == 'NPAC':
         ext = [-170., -120., 40., 65.]
         
     ## create html table with max value within extent

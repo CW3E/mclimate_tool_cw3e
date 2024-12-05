@@ -1,0 +1,63 @@
+    <p style="background-color:#ffffff;font: 14px/14px Arial, Helvetica, sans-serif;color:#000000;"><b>Table description:</b> The maximum M-Climate Percentile Rank for Integrated Water Vapor Transport (IVT), Freezing Level (Z0), and 1000-hPa wind speed (UV) within the domain in the maps on the right every 6 hours from the initialization time indicated at the top of the table. Click on the forecast lead cell to update the maps on the right.</p> 
+ </div>
+
+<!-- Function to change images on clicking table cell -->
+<script>
+function changeImg(cell) {
+    const Flead = cell.innerHTML;
+    document.getElementById("imgivt").src = `images/images_operational/SEAK_ivt_mclimate_F${Flead}.png`;
+    document.getElementById("imgZ0").src = `images/images_operational/SEAK_freezing_level_mclimate_F${Flead}.png`;
+    document.getElementById("imguv").src = `images/images_operational/SEAK_uv1000_mclimate_F${Flead}.png`;
+}
+</script>
+
+<!-- Table with Graphics and Caption -->
+<div class="column right">
+<table id="tab" width="1000">
+<!-- Labels Row 1-->
+    <tr>
+		<th style="background-color:#ffffff;font: 16px/16px Arial, Helvetica, sans-serif;">IVT</th>
+		<th style="background-color:#ffffff;font: 16px/16px Arial, Helvetica, sans-serif;">Freezing Level</th>
+	</tr>
+<!-- Images Row 1-->   
+	<tr>
+		<td><span><img id="imgivt" src="images/images_operational/SEAK_ivt_mclimate_F6.png" width="500"/></span></td>
+		<td><span><img id="imgZ0" src="images/images_operational/SEAK_freezing_level_mclimate_F6.png" width="500"/></span></td>
+	</tr>
+    
+<!-- Labels Row 2-->
+    <tr>
+		<th style="background-color:#ffffff;font: 16px/16px Arial, Helvetica, sans-serif;">1000-hPa Wind</th>
+	</tr>
+<!-- Images Row 2 -->   
+	<tr>
+		<td><span><img id="imguv" src="images/images_operational/SEAK_uv1000_mclimate_F6.png" width="500"/></span></td>	
+	</tr>
+    
+<!-- Caption-->
+	<tr>
+	<td colspan="2" style="background-color:#ffffff;font: 14px/14px Arial, Helvetica, sans-serif;color:#000000;"><b>Image description:</b> Model Climate (M-Climate) is generated based on NOAA’s Global Ensemble Forecast System, version 12 (GEFSv12) reforecast data (2000-2019), for integrated water vapor transport (IVT), freezing level (Z0), and 1000-hPa wind (shading, percentile rank). This places important forecast elements in the context of reforecasts with the same lead time and at similar times of year. For example, large M-Climate Percentile Rank IVT values indicate GEFS ensemble mean IVT values are large for a given lead time. The contours show the ensemble mean forecast IVT (kg m<sup>-1</sup> s<sup>-1</sup>), freezing level (feet), and 1000-hPa wind (knots) based on NOAA’s Global Ensemble Forecast System.
+	</td></tr>
+	<tr><td colspan="2"><hr></td></tr>
+	<tr>
+		<td colspan="2" style="background-color:#ffffff;font: 16px/16px Arial, Helvetica, sans-serif;"><b>Data Sources</b></td></tr>
+		<tr><td colspan="2" style="background-color:#ffffff;font: 14px/14px Arial, Helvetica, sans-serif;">
+                	<ul>
+                    	<li>National Centers for Environmental Prediction (NCEP) Global Ensemble Forecast System (GFS) Model obtained from NOAA/NCEP at 0.5-degree resolution via <a href="https://nomads.ncep.noaa.gov">NOMADS</a>.</li>
+                      <li>The NOAA GEFS Reforecast version 12 data at 0.25-degree resolution was obtained from NOAA via <a href="https://registry.opendata.aws/noaa-gefs-reforecast/">Amazon AWS</a>.</li>
+                    </td></tr>
+  <tr><td colspan="2"><hr></td></tr>
+  <tr><td colspan="2" style="font: 14px/14px Arial, Helvetica, sans-serif;"><div id="contact"></div></td></tr>
+  <tr><td colspan="2" style="font: 14px/14px Arial, Helvetica, sans-serif;">
+  <img width="1000" src="img/banner_footer.png">
+  </td></tr>
+
+</table>
+  </div>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>
