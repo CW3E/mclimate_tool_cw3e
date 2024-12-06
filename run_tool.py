@@ -48,6 +48,7 @@ step_lst = ds.step.values
 F_lst =  step_lst
 ts = pd.to_datetime(forecast.init_date.values, format="%Y%m%d%H")
 fdate = ts.strftime('%Y%m%d%H')
+print(fdate)
 
 def multiP_preprocess_GEFS_intermediate(F, fdate):
     ##############################
@@ -70,8 +71,6 @@ if __name__ == '__main__':
     
 print('...Reading Freezing Level data for M-Climate comparison')
 varname = 'freezing_level'
-ts = pd.to_datetime(forecast.init_date.values, format="%Y%m%d%H")
-fdate = ts.strftime('%Y%m%d%H')
 forecast1, ds1 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
 
 print('...Reading UV data for M-Climate comparison')
