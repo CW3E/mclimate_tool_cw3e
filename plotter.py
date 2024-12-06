@@ -15,6 +15,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
+import matplotlib.patches as mpatches
 import pandas as pd
 import cmocean.cm as cmo
 from matplotlib.colorbar import Colorbar # different way to handle colorbar
@@ -140,7 +141,7 @@ def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, ytick
     
     return ax
 
-def plot_mclimate_forecast(ds, fc, step, varname, fname, ext_name='NPAC'):
+def plot_mclimate_forecast(ds, fc, step, varname, fname, ext_name='NPAC', historical=False):
 
     if ext_name == 'NPAC':
         ext = [-170., -120., 40., 65.]
@@ -226,7 +227,16 @@ def plot_mclimate_forecast(ds, fc, step, varname, fname, ext_name='NPAC'):
                      linewidths=0.75, linestyles='solid')
     plt.clabel(cs, **kw_clabels)
 
-    
+    ## add box if historical
+    if historical == True: 
+        bbox_ext = [-141., -130., 54., 60.]
+        ax.add_patch(mpatches.Rectangle(xy=[bbox_ext[0], bbox_ext[2]], width=bbox_ext[1]-bbox_ext[0], height=bbox_ext[3]-bbox_ext[2],
+                                    fill=False,
+                                    edgecolor='k',
+                                    linewidth=0.75,
+                                    transform=datacrs,
+                                    zorder=199))
+        
     # Add color bar
     cbax = plt.subplot(gs[1,0]) # colorbar axis
     cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
@@ -365,3 +375,130 @@ def plot_mclimate_forecast_comparison(ds_lst, fc_lst, varname, fname, ext=[-170.
     
     # Show
     plt.show()
+
+def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain):
+    if domain == 'SEAK':
+        ext = [-141., -130., 54., 60.]
+
+    else:
+        ext = [-170., -120., 40., 65.]
+        
+    ls = ds.isel(lat=0).lat.values
+    le = ds.isel(lat=-1).lat.values
+
+    if ls < le:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+    else:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+
+    ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
+    init_date = ts.strftime('%Y%m%d%H')
+    init_time = ts.strftime('%HZ %d %b %Y')
+    start_date = ts - timedelta(days=45)
+    start_date = start_date.strftime('%d-%b')
+    end_date = ts + timedelta(days=45)
+    end_date = end_date.strftime('%d-%b')
+    ts_valid = ts + timedelta(hours=int(step))
+    valid_time = ts_valid.strftime('%HZ %d %b %Y')
+    left_lbl = 'Initialized: {0}'.format(init_time)
+    right_lbl = 'F-{0} | Valid: {1}'.format(int(step), valid_time)
+    
+    # Set up projection
+    mapcrs = ccrs.PlateCarree()
+    datacrs = ccrs.PlateCarree()
+    
+    # Set tick/grid locations
+    lats = ds.lat.values
+    lons = ds.lon.values
+    if domain == 'NPAC':
+        dx = [-160, -150, -140, -130]
+        dy = [45., 50., 55., 60.]
+    elif domain == 'SEAK':
+        dx = [-140, -135, -130]
+        dy = [54., 56., 58., 60.]
+    else:
+        dx = np.arange(lons.min().round(),lons.max().round()+10,10)
+        dy = np.arange(lats.min().round(),lats.max().round()+10,10)
+    
+    # Create figure
+    fig = plt.figure(figsize=(10, 8.5))
+    fig.dpi = 600
+    fmt = 'png'
+    
+    nrows = 7
+    ncols = 2
+    
+    # contour labels
+    kw_clabels = {'fontsize': 7, 'inline': True, 'inline_spacing': 7, 'fmt': '%i',
+                  'rightside_up': True, 'use_clabeltext': True}
+    
+    kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
+    
+    ## Use gridspec to set up a plot with a series of subplots that is
+    ## n-rows by n-columns
+    gs = GridSpec(nrows, ncols, height_ratios=[0.5, 0.05, 0.05, 0.5, 0.05, 0.05, 0.05], width_ratios = [1, 1], wspace=0.05, hspace=0.002)
+    ## use gs[rows index, columns index] to access grids
+
+
+    ## loop through variables
+    row_idx = [0, 0, 3]
+    col_idx = [0, 1, 0]
+    var_lst = ['ivt', 'freezing_level', 'uv']
+    llat_lst = [True, False, True]
+    for i, (row, col, var) in enumerate(zip(row_idx, col_idx, var_lst)):
+        ax = fig.add_subplot(gs[row, col], projection=mapcrs)   
+        ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=llat_lst[i], right_lats=False, bottom_lons=True)
+        
+        ## set cmap and contour values based on varname
+        if var == 'ivt':
+            cmap_name = 'mclimate_green'
+            clevs = np.arange(250., 2100., 250.)
+        elif var == 'freezing_level':
+            cmap_name = 'mclimate_red'
+            clevs = np.arange(0., 60000., 2000.)
+            fc[var] = fc[var]*3.281 # convert to feet
+        elif var == 'uv':
+            cmap_name = 'mclimate_purple'
+            clevs = np.arange(0., 55., 5.)
+        
+        # Contour Filled (mclimate values)
+        data = ds.sel(step=step)[var].values*100.
+        cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
+        cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                           cmap=cmap, norm=norm, alpha=0.9)
+
+        # Contour Lines (forecast values)
+        forecast = fc[var].sel(step=step)     
+        cs = ax.contour(lons, lats, forecast, transform=datacrs,
+                         levels=clevs, colors='k',
+                         linewidths=0.75, linestyles='solid')
+        plt.clabel(cs, **kw_clabels)
+        
+        # Add color bar
+        cbax = plt.subplot(gs[row+1,col]) # colorbar axis
+        cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+        cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
+                      ticklocation = 'bottom', ticks=cbarticks)
+        cb.set_label(cbarlbl, fontsize=11)
+        cb.ax.tick_params(labelsize=12)
+
+        if i == 0:
+            ax.set_title(left_lbl, loc='left', fontsize=10)
+        elif i == 1:
+            ax.set_title(right_lbl, loc='right', fontsize=10)
+    
+    txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, step)
+    ann_ax = fig.add_subplot(gs[-1, :])
+    ann_ax.axis('off')
+    ann_ax.annotate(textwrap.fill(txt, 101), # this is the text
+               (0, 0.3), # these are the coordinates to position the label
+                textcoords="offset points", # how to position the text
+                xytext=(0,-19), # distance from text to points (x,y)
+                ha='left', # horizontal alignment can be left, right or center
+                **kw_ticklabels)
+    
+    fig.savefig('%s.%s' %(fname, fmt), bbox_inches='tight', dpi=fig.dpi)
+
+    plt.close(fig)
