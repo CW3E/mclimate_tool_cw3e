@@ -24,6 +24,16 @@ from plotter import plot_mclimate_forecast
 import mclimate_funcs as mclim_func
 from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
+from cw3e_tools import remove_tmp_data_files
+
+#################################
+### CHECK TO REMOVE TMP FILES ###
+#################################
+print('Removing tmp intermediate data files...') 
+# Specify the directory and the pattern
+directory = "/data/projects/operations/GEFS_Mclimate/data/tmp/"
+pattern = "tmp*.nc"  # Delete all .txt files
+remove_tmp_data_files(directory, pattern)
 
 ######################
 ### VARS TO UPDATE ###
@@ -44,7 +54,7 @@ step_lst = ds.step.values
 ##############################################################
 ### PREPROCESS INTERMEDIATE GEFS FREEZING LEVEL AND UV1000 ###
 ##############################################################
-
+print('...preprocess Intermediate GEFS data ...')
 F_lst =  step_lst
 ts = pd.to_datetime(forecast.init_date.values, format="%Y%m%d%H")
 fdate = ts.strftime('%Y%m%d%H')
@@ -120,8 +130,8 @@ for i, region in enumerate(region_lst):
     out_fname = "/data/projects/website/mirror/htdocs/Projects/MClimate/mclimate_tool_operational.html"
     out_fname = "/data/projects/website/mirror/htdocs/Projects/MClimate/mclimate_beta_{0}.html".format(region)
 
-    with open('out/html_text.txt', mode='r') as in_file, \
-         open('out/html_text2_{0}.txt'.format(region), mode='r') as in_file2, \
+    with open('/data/projects/operations/GEFS_Mclimate/out/html_text.txt', mode='r') as in_file, \
+         open('/data/projects/operations/GEFS_Mclimate/out/html_text2_{0}.txt'.format(region), mode='r') as in_file2, \
          open(out_fname, mode='w') as out_file:
 
         # A file is iterable
@@ -138,3 +148,12 @@ for i, region in enumerate(region_lst):
             out_file.write(line)
 
         out_file.close()
+        
+########################
+### REMOVE TMP FILES ###
+########################
+print('Removing tmp intermediate data files...') 
+# Specify the directory and the pattern
+directory = "/data/projects/operations/GEFS_Mclimate/data/tmp/"
+pattern = "tmp*.nc"  # Delete all .txt files
+remove_tmp_data_files(directory, pattern)
