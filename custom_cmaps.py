@@ -56,7 +56,28 @@ custom_cmaps =    {
                         "bounds":[75., 90., 94., 95., 96., 97., 98., 99., 100., 101.],
                         "ticks":[75., 90., 94., 95., 96., 97., 98., 99., 100.],
                         "label": 'Freezing Level Percentile Rank (xth)',
-                        }
+                        },
+            "duration" :{
+                        "colors":[
+                            [241,238,246],
+                            [189,201,225],
+                            [116,169,207],
+                            [5,112,176]],
+                        "bounds":[0, 24, 48, 72, 300],
+                        "ticks":[0, 24, 48, 72, 300],
+                        "label": 'Duration (hr) IVT > 95th percentile',
+                        },
+            "ar_index" :{
+                        "colors":[
+                            [255, 255, 255],
+                            [241,238,246],
+                            [215,181,216],
+                            [223,101,176],
+                            [206,18,86]],
+                        "bounds":[0, 1, 2, 3, 4, 6],
+                        "ticks":[0, 1, 2, 3, 4],
+                        "label": 'AR Index',
+                        },
 }
 
 def cmap(cbarname):

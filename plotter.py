@@ -475,6 +475,28 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain):
                          levels=clevs, colors='k',
                          linewidths=0.75, linestyles='solid')
         plt.clabel(cs, **kw_clabels)
+
+        ## Plot Normalized Vectors
+        kw_quiver = {'headlength': 6, 'headaxislength': 4.5, 'headwidth': 4.5}
+        if var == 'ivt':
+            forecast = fc.sel(step=step) 
+            fc_mask = forecast.where((forecast.ivt > 250.))
+            
+            fcu = fc_mask['ivtu'] / fc_mask['ivt']
+            fcv = fc_mask['ivtv'] / fc_mask['ivt']
+
+            q = ax.quiver(lons, lats, fcu, fcv, color='k', regrid_shape=20,
+                          capstyle='round', units='width', **kw_quiver)
+
+        if var == 'uv':
+            forecast = fc.sel(step=step) 
+            fc_mask = forecast.where((forecast.uv > 20.))
+            
+            fcu = fc_mask['u'] / fc_mask['uv']
+            fcv = fc_mask['v'] / fc_mask['uv']
+
+            q = ax.quiver(lons, lats, fcu, fcv, color='0.7', regrid_shape=20,
+                          capstyle='round', units='width', **kw_quiver)
         
         # Add color bar
         cbax = plt.subplot(gs[row+1,col]) # colorbar axis
@@ -484,11 +506,50 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain):
         cb.set_label(cbarlbl, fontsize=11)
         cb.ax.tick_params(labelsize=12)
 
+        ## add box if domain is NPAC
+        if domain == 'NPAC': 
+            bbox_ext = [-141., -130., 54., 60.]
+            ax.add_patch(mpatches.Rectangle(xy=[bbox_ext[0], bbox_ext[2]], width=bbox_ext[1]-bbox_ext[0], height=bbox_ext[3]-bbox_ext[2],
+                                        fill=False,
+                                        edgecolor='k',
+                                        linewidth=0.75,
+                                        transform=datacrs,
+                                        zorder=199))
+
         if i == 0:
             ax.set_title(left_lbl, loc='left', fontsize=10)
         elif i == 1:
             ax.set_title(right_lbl, loc='right', fontsize=10)
-    
+
+    #####################
+    ### AR INDEX PLOT ###
+    #####################
+    ax = fig.add_subplot(gs[3, 1], projection=mapcrs)
+    ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=False, right_lats=False, bottom_lons=True)
+    # Contour Filled (mclimate values)
+    data = ds.sel(step=step)['AR_index'].values
+    cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap('ar_index')
+    cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                       cmap=cmap, norm=norm, alpha=0.9)
+
+    ## add box if domain is NPAC
+    if domain == 'NPAC': 
+        bbox_ext = [-141., -130., 54., 60.]
+        ax.add_patch(mpatches.Rectangle(xy=[bbox_ext[0], bbox_ext[2]], width=bbox_ext[1]-bbox_ext[0], height=bbox_ext[3]-bbox_ext[2],
+                                    fill=False,
+                                    edgecolor='k',
+                                    linewidth=0.75,
+                                    transform=datacrs,
+                                    zorder=199))
+
+    # Add color bar
+    cbax = plt.subplot(gs[4,1]) # colorbar axis
+    cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
+                  ticklocation = 'bottom', ticks=cbarticks)
+    cb.set_label(cbarlbl, fontsize=11)
+    cb.ax.tick_params(labelsize=12)
+        
     txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, step)
     ann_ax = fig.add_subplot(gs[-1, :])
     ann_ax.axis('off')

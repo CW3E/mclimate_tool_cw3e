@@ -11,7 +11,7 @@ import pandas as pd
 
 import cw3e_tools as ctools
 
-def compare_mclimate_to_forecast(fc, mclimate, varname):
+def compare_mclimate_to_forecast(fc, mclimate, varname, F=None):
     if varname == 'uv1000':
         varname = 'uv'
     ## compare IVT forecast to mclimate
@@ -37,20 +37,28 @@ def compare_mclimate_to_forecast(fc, mclimate, varname):
             b = b.expand_dims(dim="quantile")
     
         b.name = varname
-        var_dict = {'mclimate': (['step', 'lat', 'lon'], b.squeeze().values)}
+        b_vals = b.squeeze()
+        if F == None:
+            b_vals = b_vals.values
+            steps = b.step.values
+        else:
+            b_vals = b_vals.expand_dims(dim={"step": [b.step.values]}, axis=0).values
+            steps = [b.step.values]
+        var_dict = {'mclimate': (['step', 'lat', 'lon'], b_vals)}
         new_ds = xr.Dataset(var_dict,
                         coords={'lat': (['lat'], b.lat.values),
                                 'lon': (['lon'], b.lon.values),
-                                'step': (['step'], b.step.values)})     
+                                'step': (['step'], steps)})     
         b_lst.append(new_ds)
         
     ds = xr.merge(b_lst)
-    ds = ds.assign_coords({"init_date": (fc.init_date)})
-
+    # ds = ds.assign_coords({"init_date": (fc.init_date)})
+    
     return ds
 
-def load_reforecast(date, varname):
-    path_to_data = '/expanse/nfs/cw3e/cwp140/' 
+def load_reforecast(date, varname, F=None):
+    path_to_data = '/expanse/nfs/cw3e/cwp140/'
+    ## load all F values
     fname_pattern = path_to_data + 'preprocessed/GEFSv12_reforecast/{0}/{1}_{0}_F*.nc'.format(varname, date)
     forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
     forecast  = forecast.sortby("step") # sort by step (forecast lead)
@@ -58,14 +66,22 @@ def load_reforecast(date, varname):
     forecast = forecast.sel(step=tmp) ## select every 6 hours up to 10 days lead time
     step_vals = forecast.step.values / pd.Timedelta(hours=1)
     forecast = forecast.assign_coords({"step": step_vals.astype(int)})
+    if F == None:
+        forecast = forecast
+    else:
+        ## load specific F 
+        forecast = forecast.sel(step=F)
     if varname == 'ivt':
         forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 'time': 'init_date'}) # need to rename this to match GEFSv12 Reforecast mclimate
-        forecast = forecast.drop_vars(["ivtu", "ivtv"])
+        # forecast = forecast.drop_vars(["ivtu", "ivtv"])
     elif varname == 'uv1000':
         forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat'}) # need to rename this to match GEFSv12 Reforecast
         uv = np.sqrt(forecast.u**2 + forecast.v**2)
-        forecast = forecast.assign(uv=(['number', 'step', 'lat','lon'],uv.data))
-        forecast = forecast.drop_vars(["u", "v"])
+        if F == None:
+            forecast = forecast.assign(uv=(['number', 'step', 'lat','lon'],uv.data))
+        else:
+            forecast = forecast.assign(uv=(['number', 'lat','lon'],uv.data))
+        # forecast = forecast.drop_vars(["u", "v"])
         forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
     else:
         forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
@@ -77,7 +93,7 @@ def load_reforecast(date, varname):
 
     return forecast
 
-def load_mclimate(mon, day, varname, server):
+def load_mclimate(mon, day, varname, server, F=None):
     ## special circumstance for leap day
     if (mon == '02') & (day == '29'):
         mon = '02'
@@ -97,29 +113,41 @@ def load_mclimate(mon, day, varname, server):
     else:
         ds = ds
     ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(70., 10.))
+
+    if F == None:
+        ds = ds
+    else: 
+        ds = ds.sel(step=F)
     ## load the data into memory
     ds = ds.load()
 
     return ds
 
-def load_archive_GEFS_forecast(date, varname):
+def load_archive_GEFS_forecast(date, varname, F=None):
     ### load forecast from GEFS
     if varname == 'ivt':
         varname = 'IVT'
     elif varname == 'uv1000':
         varname = 'UV1000'
-    
-    fname_pattern = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f*.{1}'.format(date, varname)
-    forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
+
+    if F == None:
+        fname_pattern = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f*.{1}'.format(date, varname)
+        forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
+    else:
+        F = str(F).zfill(3)
+        fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
+        forecast = xr.open_dataset(fname)
     forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 
                                   "time": "init_date"}) # need to rename this to match GEFSv12 Reforecast
-    
     if varname == 'freezing_level':
         forecast = forecast.rename({"gh": "freezing_level"})
     if varname == 'UV1000':
         uv = np.sqrt(forecast.u**2 + forecast.v**2)
-        forecast = forecast.assign(uv=(['step', 'lat','lon'],uv.data))
-        forecast = forecast.drop_vars(["u", "v"])
+        if F == None:
+            forecast = forecast.assign(uv=(['step', 'lat','lon'],uv.data))
+        else:
+            forecast = forecast.assign(uv=(['lat','lon'],uv.data))
+        # forecast = forecast.drop_vars(["u", "v"])
         
     forecast = forecast.assign_coords({"lon": (((forecast.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
     s = forecast.step.values
@@ -130,10 +158,10 @@ def load_archive_GEFS_forecast(date, varname):
 
     return forecast
 
-def run_compare_mclimate_forecast(varname, fdate, model, server):
+def run_compare_mclimate_forecast(varname, fdate, model, server, F=None):
     ## load forecast data
     if model == 'GEFSv12_reforecast':
-        forecast = load_reforecast(fdate, varname)
+        forecast = load_reforecast(fdate, varname, F)
 
     elif model == 'GFS':
         ## using operational GFS data
@@ -149,7 +177,7 @@ def run_compare_mclimate_forecast(varname, fdate, model, server):
         forecast = ctools.load_intermediate_GEFS(varname)
 
     elif model == 'GEFS_archive':
-        forecast = load_archive_GEFS_forecast(fdate, varname)
+        forecast = load_archive_GEFS_forecast(fdate, varname, F)
     
     ## get month and date from the intialization date of the forecast
     ts = pd.to_datetime(forecast.init_date.values, format="%Y%m%d%H")
@@ -158,7 +186,7 @@ def run_compare_mclimate_forecast(varname, fdate, model, server):
     print(mon, day)
     
     ## load mclimate data based on the initialization date
-    mclimate = load_mclimate(mon, day, varname, server)
+    mclimate = load_mclimate(mon, day, varname, server, F)
 
     if (model == 'GEFS') | (model == 'GEFS_archive'):
         ## regrid/interpolate data to all have same grid size
@@ -167,6 +195,6 @@ def run_compare_mclimate_forecast(varname, fdate, model, server):
         mclimate = mclimate.interp(lon=regrid_lons, lat=regrid_lats)
     
     ## compare the mclimate to the reforecast
-    ds = compare_mclimate_to_forecast(forecast, mclimate, varname)
+    ds = compare_mclimate_to_forecast(forecast, mclimate, varname, F)
 
     return forecast, ds
