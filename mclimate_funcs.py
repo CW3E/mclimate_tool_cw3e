@@ -52,7 +52,7 @@ def compare_mclimate_to_forecast(fc, mclimate, varname, F=None):
         b_lst.append(new_ds)
         
     ds = xr.merge(b_lst)
-    # ds = ds.assign_coords({"init_date": (fc.init_date)})
+    ds = ds.assign_coords({"init_date": (fc.init_date)})
     
     return ds
 
@@ -124,6 +124,8 @@ def load_mclimate(mon, day, varname, server, F=None):
     return ds
 
 def load_archive_GEFS_forecast(date, varname, F=None):
+    fpath = '/expanse/lustre/scratch/dnash/temp_project/preprocessed/GEFS/'
+    # fpath = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/'
     ### load forecast from GEFS
     if varname == 'ivt':
         varname = 'IVT'
@@ -131,12 +133,13 @@ def load_archive_GEFS_forecast(date, varname, F=None):
         varname = 'UV1000'
 
     if F == None:
-        fname_pattern = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f*.{1}'.format(date, varname)
+        fname_pattern = fpath + '{0}.t00z.0p50.f*.{1}'.format(date, varname)
         forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
     else:
         F = str(F).zfill(3)
-        fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
+        fname = fpath + '{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
         forecast = xr.open_dataset(fname)
+    
     forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 
                                   "time": "init_date"}) # need to rename this to match GEFSv12 Reforecast
     if varname == 'freezing_level':

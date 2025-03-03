@@ -76,7 +76,7 @@ custom_cmaps =    {
                             [206,18,86]],
                         "bounds":[0, 1, 2, 3, 4, 6],
                         "ticks":[0, 1, 2, 3, 4],
-                        "label": 'AR Index',
+                        "label": 'AR Impact Index',
                         },
 }
 
