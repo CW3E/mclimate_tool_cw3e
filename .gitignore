@@ -82,6 +82,7 @@ auxhist*
 *.diag.*
 *DATA*
 *.TBL
+*.csv
 
 # no images unless explicitly committed #
 ##################
