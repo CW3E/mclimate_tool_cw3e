@@ -53,6 +53,7 @@ print('...Reading IVT data for M-Climate comparison')
 varname = 'ivt' ## 'freezing_level' or 'ivt'
 forecast, ds = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
 step_lst = ds.step.values
+ds = ds.rename({'mclimate': 'ivt'})
     
 ##############################################################
 ### PREPROCESS INTERMEDIATE GEFS FREEZING LEVEL AND UV1000 ###
@@ -84,10 +85,12 @@ if __name__ == '__main__':
 print('...Reading Freezing Level data for M-Climate comparison')
 varname = 'freezing_level'
 forecast1, ds1 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
+ds1 = ds1.rename({'mclimate': 'freezing_level'})
 
 print('...Reading UV data for M-Climate comparison')
 varname = 'uv1000'
 forecast2, ds2 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
+ds2 = ds2.rename({'mclimate': 'uv'})
 
 
 ### merge the datasets
