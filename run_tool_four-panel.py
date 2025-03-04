@@ -20,7 +20,7 @@ import matplotlib as mpl
 mpl.use('agg')
 
 # import personal modules
-from plotter import plot_mclimate_forecast
+from plotter import plot_mclimate_forecast_four_panel
 import mclimate_funcs as mclim_func
 from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
