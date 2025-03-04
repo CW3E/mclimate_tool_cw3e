@@ -25,7 +25,7 @@ import mclimate_funcs as mclim_func
 from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
 from cw3e_tools import remove_tmp_data_files
-from plot_four_panel_fig import create_dataframe_max_values, plot_heatmap
+from plot_four_panel_fig import create_dataframe_max_values, plot_heatmap, compute_AR_duration_AR_impact_index
 
 sys.argv.append(None) ## add this in case date not specified in command line
 fdate = sys.argv[1] ## set this to None to get most recently downloaded data  
@@ -96,6 +96,9 @@ ds2 = ds2.rename({'mclimate': 'uv'})
 ### merge the datasets
 ds3 = xr.merge([ds, ds1, ds2])
 ds3 = ds3.sortby('lat')
+
+## compute AR duration and AR Impact Index value
+ds3 = compute_AR_duration_AR_impact_index(ds3)
 
 fc = xr.merge([forecast, forecast1, forecast2])
 fc = fc.sortby('lat')
