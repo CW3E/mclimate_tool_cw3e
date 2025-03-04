@@ -14,7 +14,7 @@ from datetime import timedelta
 import re
 import shutil
 import glob
-from multiprocessing import Pool
+import multiprocessing as mp
 
 import matplotlib as mpl
 mpl.use('agg')
