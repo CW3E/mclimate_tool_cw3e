@@ -25,7 +25,7 @@ import mclimate_funcs as mclim_func
 from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
 from cw3e_tools import remove_tmp_data_files
-from plot_four_panel_fig import create_dataframe_max_value, plot_heatmap
+from plot_four_panel_fig import create_dataframe_max_values, plot_heatmap
 
 sys.argv.append(None) ## add this in case date not specified in command line
 fdate = sys.argv[1] ## set this to None to get most recently downloaded data  
