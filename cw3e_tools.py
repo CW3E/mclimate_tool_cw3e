@@ -138,7 +138,8 @@ class load_GEFS_datasets:
         
         if self.varname == 'ivt':
             ds = ds.rename({'IVT': 'ivt', 'forecast_hour': 'step'}) # need to rename this to match GEFSv12 Reforecast
-            ds = ds.drop_vars(["uIVT", "vIVT"])
+            # ds = ds.drop_vars(["uIVT", "vIVT"])
+            ds = ds.rename({'uIVT': 'ivtu', 'vIVT': 'ivtv'})
             ds = ds.assign_coords({"init_date": (self.model_init_date)})
         elif self.varname == 'freezing_level':
             ds = ds.rename({'HGT_P1_L4_GLL0': 'freezing_level', 'forecast_time0': 'step', 'lat_0': 'lat', 'lon_0': 'lon', 'ensemble0': 'ensemble'}) # need to rename this to match GEFSv12 Reforecast

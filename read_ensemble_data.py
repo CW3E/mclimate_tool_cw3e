@@ -119,7 +119,7 @@ class load_GEFS_datasets:
         ## compute uv magnitude
         uv = np.sqrt(ds.u**2 + ds.v**2)
         ds = ds.assign(uv=(['number', 'lat','lon'],uv.data))
-        ds = ds.drop_vars(["u", "v"])
+        # ds = ds.drop_vars(["u", "v"])
         
         ## compute ensemble mean
         ds = ds.mean('number')
