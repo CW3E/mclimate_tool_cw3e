@@ -344,4 +344,4 @@ https://conda.anaconda.org/conda-forge/noarch/metpy-1.5.1-pyhd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/linux-64/pyarrow-13.0.0-py312h176e3d2_13_cpu.conda
 https://conda.anaconda.org/conda-forge/noarch/seaborn-0.13.0-hd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/noarch/dask-2023.10.1-pyhd8ed1ab_0.conda
-https://conda.anaconda.org/conda-forge/linux-aarch64/bottleneck-1.4.2-py310h3a805a6_0.conda
+https://anaconda.org/conda-forge/bottleneck/1.4.2/download/linux-aarch64/bottleneck-1.4.2-py311hec9beba_0.conda
