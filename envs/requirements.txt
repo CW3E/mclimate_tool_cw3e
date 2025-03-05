@@ -2,6 +2,8 @@
 # $ conda create --name <env> --file <this file>
 # platform: linux-64
 @EXPLICIT
+https://conda.anaconda.org/conda-forge/noarch/dask-core-2023.10.1-pyhd8ed1ab_0.conda
+https://conda.anaconda.org/conda-forge/noarch/dask-2023.10.1-pyhd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
 https://conda.anaconda.org/conda-forge/linux-64/ca-certificates-2023.11.17-hbcca054_0.conda
 https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2
