@@ -14,17 +14,21 @@ from datetime import timedelta
 import re
 import shutil
 import glob
-from multiprocessing import Pool
+import multiprocessing as mp
 
 import matplotlib as mpl
 mpl.use('agg')
 
 # import personal modules
-from plotter import plot_mclimate_forecast
+from plotter import plot_mclimate_forecast_four_panel
 import mclimate_funcs as mclim_func
 from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
 from cw3e_tools import remove_tmp_data_files
+from plot_four_panel_fig import create_dataframe_max_values, plot_heatmap, compute_AR_duration_AR_impact_index
+
+sys.argv.append(None) ## add this in case date not specified in command line
+fdate = sys.argv[1] ## set this to None to get most recently downloaded data  
 
 #################################
 ### CHECK TO REMOVE TMP FILES ###
@@ -38,18 +42,18 @@ remove_tmp_data_files(directory, pattern)
 ######################
 ### VARS TO UPDATE ###
 ######################
-fdate = None ## initialization date in YYYYMMDD format
 model = 'GEFS' ## 'GEFSv12_reforecast', 'GFS', 'GEFS', 'GEFS_archive'
-fig_path = '/data/projects/website/mirror/htdocs/Projects/MClimate/images/images_operational/'
-os.makedirs(os.path.dirname(fig_path), exist_ok=True)
+fig_path = '/data/projects/operations/GEFS_Mclimate/figs/images_operational/'
+# os.makedirs(os.path.dirname(fig_path), exist_ok=True)
 
-###########
-### IVT ###
-###########
+################
+### READ IVT ###
+################
 print('...Reading IVT data for M-Climate comparison')
 varname = 'ivt' ## 'freezing_level' or 'ivt'
 forecast, ds = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
 step_lst = ds.step.values
+ds = ds.rename({'mclimate': 'ivt'})
     
 ##############################################################
 ### PREPROCESS INTERMEDIATE GEFS FREEZING LEVEL AND UV1000 ###
@@ -60,7 +64,7 @@ ts = pd.to_datetime(forecast.init_date.values, format="%Y%m%d%H")
 fdate = ts.strftime('%Y%m%d%H')
 print(fdate)
 
-def multiP_preprocess_GEFS_intermediate(F, fdate):
+def multiP_preprocess_GEFS_intermediate(F):
     ##############################
     ### PREP INTERMEDIATE DATA ###
     ##############################
@@ -68,12 +72,11 @@ def multiP_preprocess_GEFS_intermediate(F, fdate):
     s = load_GEFS_datasets(F=F, fdate=fdate)
     model_data= s.calc_vars()
 
-if __name__ == '__main__':
-    with Pool(processes=30) as pool:
-        for F in F_lst:
-            result = pool.apply_async(func=multiP_preprocess_GEFS_intermediate,args=(F, fdate))
-        pool.close()
-        pool.join()
+if __name__ == '__main__':      
+    with mp.Pool(processes=16) as pool:
+            pool.map(multiP_preprocess_GEFS_intermediate,F_lst)
+            pool.close()
+            pool.join()
 
 ##############################
 ### LOAD INTERMEDIATE DATA ###
@@ -82,72 +85,46 @@ if __name__ == '__main__':
 print('...Reading Freezing Level data for M-Climate comparison')
 varname = 'freezing_level'
 forecast1, ds1 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
+ds1 = ds1.rename({'mclimate': 'freezing_level'})
 
 print('...Reading UV data for M-Climate comparison')
 varname = 'uv1000'
 forecast2, ds2 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
+ds2 = ds2.rename({'mclimate': 'uv'})
+
+
+### merge the datasets
+ds3 = xr.merge([ds, ds1, ds2])
+ds3 = ds3.sortby('lat')
+
+## compute AR duration and AR Impact Index value
+ds3 = compute_AR_duration_AR_impact_index(ds3)
+
+fc = xr.merge([forecast, forecast1, forecast2])
+fc = fc.sortby('lat')
 
 ####################
 ### CREATE PLOTS ###
 ####################
+print(' ...... creating four panel plot ...')
+step_lst = ds3.step.values
+for i, step in enumerate(step_lst):
+    print(step)
+    out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
+    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK")
+    out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
+    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC")
 
-var_lst = ['ivt', 'freezing_level', 'uv1000']
-ds_lst = [ds, ds1, ds2]
-fc_lst = [forecast, forecast1, forecast2]
-region_lst = ['NPAC', 'SEAK']
+## create dataframe with max values
+print(' ...... creating dataframe with maximum values ...')
+df, init_time, date_lbl = create_dataframe_max_values(ds3)
 
-print('...Writing plots')
-for i, (varname, ds, fc) in enumerate(zip(var_lst, ds_lst, fc_lst)):
-    for region in region_lst:
-        for step in step_lst:
-            print('...for {0}, {1}, {2}'.format(varname, region, step))
-            out_fname = fig_path + '{2}_{0}_mclimate_F{1}'.format(varname, step, region)
-            ## write plots
-            plot_mclimate_forecast(ds, fc, step=step, varname=varname, fname=out_fname, ext_name=region)
-
-###################
-### BUILD TABLE ###
-###################
-## put into single dataset for table
-ds = ds.rename({'mclimate': 'ivt'})
-ds1 = ds1.rename({'mclimate': 'freezing_level'})
-ds2 = ds2.rename({'mclimate': 'uv'})
-ds3 = xr.merge([ds, ds1, ds2])
-ds3 = ds3.sortby('lat')
-
-print('...Building Table')
-for i, region in enumerate(region_lst):           
-    df = create_html_table(ds3, region)
-    ## convert to html
-    df_html = df.to_html(index=False, formatters={'Hour': lambda x: '<b>' + x + '</b>'}, escape=False)
-
-
-
-    #######################
-    ### WRITE HTML FILE ###
-    #######################
-    print('...Writing HTML file')
-    out_fname = "/data/projects/website/mirror/htdocs/Projects/MClimate/mclimate_tool_operational.html"
-    out_fname = "/data/projects/website/mirror/htdocs/Projects/MClimate/mclimate_beta_{0}.html".format(region)
-
-    with open('/data/projects/operations/GEFS_Mclimate/out/html_text.txt', mode='r') as in_file, \
-         open('/data/projects/operations/GEFS_Mclimate/out/html_text2_{0}.txt'.format(region), mode='r') as in_file2, \
-         open(out_fname, mode='w') as out_file:
-
-        # A file is iterable
-        # We can read each line with a simple for loop
-        for line in in_file:
-            out_file.write(line)
-
-
-        ## now add in the table
-        out_file.write(df_html)
-
-        ## now add the last few lines
-        for line in in_file2:
-            out_file.write(line)
-
-        out_file.close()
+######################
+### CREATE HEATMAP ###
+######################
+print(' ...... creating heatmap ...')
+out_fname = fig_path + 'heatmap'
+plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
         
 ########################
 ### REMOVE TMP FILES ###
