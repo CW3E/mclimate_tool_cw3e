@@ -41,6 +41,8 @@ From: /data/projects/containers/miniconda/base/rocky/9/Miniforge3.Rocky9.2024.09
 
     echo "=========== conda activate"
     conda activate /opt/conda/envs/container
+    
+    pip install Bottleneck
 
 %runscript
     # Activate conda environment when running the container
