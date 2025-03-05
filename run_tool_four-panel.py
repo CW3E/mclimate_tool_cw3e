@@ -43,7 +43,7 @@ remove_tmp_data_files(directory, pattern)
 ### VARS TO UPDATE ###
 ######################
 model = 'GEFS' ## 'GEFSv12_reforecast', 'GFS', 'GEFS', 'GEFS_archive'
-fig_path = '/data/projects/operations/GEFS_Mclimate/figs/images_operational'
+fig_path = '/data/projects/operations/GEFS_Mclimate/figs/images_operational/'
 # os.makedirs(os.path.dirname(fig_path), exist_ok=True)
 
 ################
