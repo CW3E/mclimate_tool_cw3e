@@ -131,10 +131,10 @@ class load_GEFS_datasets:
         # ds = ds.drop_vars(["uIVT", "vIVT"])
         ds = ds.rename({'uIVT': 'ivtu', 'vIVT': 'ivtv'})
         ds = ds.assign_coords({"init_date": (self.model_init_date)})
-        
-        ## modifications to file regardless of variable
-        ds = ds.assign_coords({"lon": (((ds.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
-        ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(10., 70.)) ## subset to SEAK domain
+        print(ds)
+        # ## modifications to file regardless of variable
+        # ds = ds.assign_coords({"lon": (((ds.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
+        # ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(10., 70.)) ## subset to SEAK domain
         # the forecast hours available on mclimate files
         step = np.array([  6,  12,  18,  24,  30,  36,  42,  48,  54,  60,  66,  72,  78,
                 84,  90,  96, 102, 108, 114, 120, 126, 132, 138, 144, 150, 156,
