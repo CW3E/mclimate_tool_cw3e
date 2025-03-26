@@ -20,12 +20,10 @@ import matplotlib as mpl
 mpl.use('agg')
 
 # import personal modules
-from plotter import plot_mclimate_forecast_four_panel
 import mclimate_funcs as mclim_func
-from build_html_table import create_html_table
 from read_ensemble_data import load_GEFS_datasets
 from cw3e_tools import remove_tmp_data_files
-from plot_four_panel_fig import create_dataframe_max_values, plot_heatmap, compute_AR_duration_AR_impact_index
+from plot_four_panel_fig import plot_mclimate_forecast_four_panel, compute_AR_duration_AR_impact_index
 
 sys.argv.append(None) ## add this in case date not specified in command line
 fdate = sys.argv[1] ## set this to None to get most recently downloaded data  
