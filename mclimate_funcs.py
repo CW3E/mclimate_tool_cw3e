@@ -71,6 +71,7 @@ def load_reforecast(date, varname, F=None):
     else:
         ## load specific F 
         forecast = forecast.sel(step=F)
+    print(forecast)
     if varname == 'ivt':
         forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 'time': 'init_date'}) # need to rename this to match GEFSv12 Reforecast mclimate
         # forecast = forecast.drop_vars(["ivtu", "ivtv"])
@@ -82,11 +83,11 @@ def load_reforecast(date, varname, F=None):
         else:
             forecast = forecast.assign(uv=(['number', 'lat','lon'],uv.data))
         # forecast = forecast.drop_vars(["u", "v"])
-        forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
+        forecast = forecast.assign_coords(init_date=(pd.to_datetime(date, format='%Y%m%d')))
     else:
-        forecast = forecast.assign_coords(init_date=(pd.to_datetime(date)))
+        forecast = forecast.assign_coords(init_date=(pd.to_datetime(date, format='%Y%m%d')))
         
-    
+    print(forecast)
     forecast = forecast.sel(lon=slice(-179.5, -110.), lat=slice(70., 10.))
     forecast = forecast.mean('number') # ensemble mean
     forecast = forecast.load()
