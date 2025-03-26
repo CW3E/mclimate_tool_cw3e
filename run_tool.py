@@ -111,20 +111,20 @@ step_lst = ds3.step.values
 for i, step in enumerate(step_lst):
     print(step)
     out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
-    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK")
+    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK", impact_date=None, fdate=fdate)
     out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
-    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC")
+    plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC", impact_date=None, fdate=fdate)
 
-## create dataframe with max values
-print(' ...... creating dataframe with maximum values ...')
-df, init_time, date_lbl = create_dataframe_max_values(ds3)
+# ## create dataframe with max values
+# print(' ...... creating dataframe with maximum values ...')
+# df, init_time, date_lbl = create_dataframe_max_values(ds3)
 
-######################
-### CREATE HEATMAP ###
-######################
-print(' ...... creating heatmap ...')
-out_fname = fig_path + 'heatmap'
-plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
+# ######################
+# ### CREATE HEATMAP ###
+# ######################
+# print(' ...... creating heatmap ...')
+# out_fname = fig_path + 'heatmap'
+# plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
         
 ########################
 ### REMOVE TMP FILES ###
