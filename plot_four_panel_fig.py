@@ -26,7 +26,7 @@ import matplotlib as mpl
 mpl.use('agg')
 
 import custom_cmaps as ccmap
-from plotter import plot_mclimate_forecast_four_panel
+from plotter import draw_basemap
 import mclimate_funcs as mclim_func
 
 def compute_AR_duration_AR_impact_index(ds3):
@@ -140,7 +140,7 @@ def create_mini_heatmap(ax, df, cmap_name, varname, ytcklbl, xtcklbl):
 
     return ax
 
-def plot_heatmap(df, init_time, date_lbl, fdate, fname):
+def plot_heatmap(fig, gs, df, init_time, date_lbl, fdate):
 
     plot_dict = {
                   "IVT" : {
@@ -165,51 +165,245 @@ def plot_heatmap(df, init_time, date_lbl, fdate, fname):
                   },
                 }
     ext=[-141., -130., 54., 60.]
-    fmt = 'png'
-    fig = plt.figure()
-    fig.set_size_inches((2.0,10.0))
-    fig.dpi = 300
-    
-    nrows = 2
-    ncols = 4
-    ## Use gridspec to set up a plot with a series of subplots that is
-    ## n-rows by n-columns
-    gs = GridSpec(nrows, ncols, height_ratios=[1, 0.05], width_ratios = [1, 1, 1, 1], wspace=0.05, hspace=0.05)
-    ## use gs[rows index, columns index] to access grids
     
     ## loop through each heatmap
     varname_lst = ['IVT', 'Freezing Level', 'UV', 'Duration']
-    for i, varname in enumerate(varname_lst):
-        print(varname)
-        ax = fig.add_subplot(gs[0, i])
-        
+    col_lst = [0, 1, 2, 3]
+    for i, (col, varname) in enumerate(zip(col_lst, varname_lst)):
+        ax = fig.add_subplot(gs[1:-2, col])
+        print(varname)        
         create_mini_heatmap(ax, df, plot_dict[varname]['cmap_name'], varname, 
                             plot_dict[varname]['ytcklbl'], plot_dict[varname]['xtcklbl'])
         if i == 0:
-            ax.set_title(init_time, fontsize=11, loc='left')
+            # ax.set_title(init_time, fontsize=11, loc='left')
     
             lbl_loc = [1, 4.5, 8.5, 12.5, 16.5, 20.5, 24.5, 28.5, 32.5, 36.5]
             for j, datel in enumerate(date_lbl):
                 ## add month day labels
                 kw = {'weight': 'bold', 'size': 9}
-                ax.text(-3.25, lbl_loc[j]+1.25, textwrap.fill(datel, width=3), va='bottom', ha='center',
+                ax.text(-5., lbl_loc[j]+1.25, textwrap.fill(datel, width=3), va='bottom', ha='center',
                     rotation='horizontal', rotation_mode='anchor', **kw)
     
     
     kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
     domain = u"{:.0f}\N{DEGREE SIGN}N to {:.0f}\N{DEGREE SIGN}N, {:.0f}\N{DEGREE SIGN}W to {:.0f}\N{DEGREE SIGN}W".format(ext[2], ext[3], ext[0], ext[1])
-    txt = 'Maximum percentile rank (xth) within {0}'.format(domain)
-    ann_ax = fig.add_subplot(gs[-1, :])
+    txt = 'Maximum percentile rank (xth) in {0}'.format(domain)
+    ann_ax = fig.add_subplot(gs[-1, :4])
     ann_ax.axis('off')
-    ann_ax.annotate(textwrap.fill(txt, 40), # this is the text
+    ann_ax.annotate(textwrap.fill(txt, 35), # this is the text
                 (0, 0.), # these are the coordinates to position the label
                 textcoords="offset points", # how to position the text
-                xytext=(-80,20), # distance from text to points (x,y)
+                xytext=(-80,10), # distance from text to points (x,y)
                 ha='left', # horizontal alignment can be left, right or center
                 **kw_ticklabels)
     
-    # Save the figure
-    fig.savefig('%s.%s' % (fname, fmt), bbox_inches='tight', dpi=fig.dpi)
+    # # Save the figure
+    # fig.savefig('%s.%s' % (fname, fmt), bbox_inches='tight', dpi=fig.dpi)
+
+    return fig
+
+def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, fdate):
+    if domain == 'SEAK':
+        ext = [-141., -130., 54., 60.]
+
+    else:
+        ext = [-170., -120., 40., 65.]
+        
+    ls = ds.isel(lat=0).lat.values
+    le = ds.isel(lat=-1).lat.values
+
+    if ls < le:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[2], ext[3]))
+    else:
+        ds = ds.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+        fc = fc.sel(lon=slice(ext[0], ext[1]), lat=slice(ext[3], ext[2]))
+
+    ts = pd.to_datetime(ds.init_date.values, format="%Y%m%d%H") 
+    init_date = ts.strftime('%Y%m%d%H')
+    init_time = ts.strftime('%HZ %d %b %Y')
+    start_date = ts - timedelta(days=45)
+    start_date = start_date.strftime('%d-%b')
+    end_date = ts + timedelta(days=45)
+    end_date = end_date.strftime('%d-%b')
+    ts_valid = ts + timedelta(hours=int(step))
+    valid_time = ts_valid.strftime('%HZ %d %b %Y')
+    left_lbl = 'Initialized: {0}'.format(init_time)
+    right_lbl = 'F-{0} | Valid: {1}'.format(int(step), valid_time)
+    
+    # Set up projection
+    mapcrs = ccrs.PlateCarree()
+    datacrs = ccrs.PlateCarree()
+    
+    # Set tick/grid locations
+    lats = ds.lat.values
+    lons = ds.lon.values
+    if domain == 'NPAC':
+        dx = [-160, -150, -140, -130]
+        dy = [45., 50., 55., 60.]
+    elif domain == 'SEAK':
+        dx = [-140, -135, -130]
+        dy = [54., 56., 58., 60.]
+    else:
+        dx = np.arange(lons.min().round(),lons.max().round()+10,10)
+        dy = np.arange(lats.min().round(),lats.max().round()+10,10)
+    
+    # Create figure
+    fig = plt.figure(figsize=(12, 8.5))
+    fig.dpi = 300
+    fmt = 'png'
+    
+    nrows = 8
+    ncols = 7
+    
+    # contour labels
+    kw_clabels = {'fontsize': 7, 'inline': True, 'inline_spacing': 7, 'fmt': '%i',
+                  'rightside_up': True, 'use_clabeltext': True}
+    
+    kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
+    
+    ## Use gridspec to set up a plot with a series of subplots that is
+    ## n-rows by n-columns
+    gs = GridSpec(nrows, ncols, height_ratios=[0.05, 0.45, 0.05, 0.05, 0.5, 0.05, 0.05, 0.05],
+                  width_ratios = [0.07, 0.07, 0.07, 0.07, 0.1, 1, 1], wspace=0.05, hspace=0.002)
+    ## use gs[rows index, columns index] to access grids
+
+    ## add heatmap
+    # create dataframe with max values
+    print(' ...... creating dataframe with maximum values ...')
+    df, init_time, date_lbl = create_dataframe_max_values(ds)
+
+    ## save as csv
+    if impact_date is not None:
+        csv_fname = '/expanse/nfs/cw3e/cwp140/images_historical/{1}/mclimate_init{0}.csv'.format(fdate, impact_date)
+        df.to_csv(csv_fname, index=True)
+    fig = plot_heatmap(fig, gs, df, init_time, date_lbl, fdate)
+
+    ## mclimate maps
+    row_lst = [0, 0, 4]
+    row_lst2 = [2, 2, 5]
+    col_lst = [5, 6, 5]
+    var_lst = ['ivt', 'freezing_level', 'uv']
+    llat_lst = [True, False, True]
+    for i, (row, col) in enumerate(zip(row_lst, col_lst)):
+        var = var_lst[i]
+        ## percentile
+        ax = fig.add_subplot(gs[row:row_lst2[i], col], projection=mapcrs)
+        ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=llat_lst[i], right_lats=False, bottom_lons=True)
+        
+        ## set cmap and contour values based on varname
+        if var == 'ivt':
+            cmap_name = 'mclimate_green'
+            clevs = np.arange(250., 2100., 250.)
+        elif var == 'freezing_level':
+            cmap_name = 'mclimate_red'
+            clevs = np.arange(0., 60000., 2000.)
+            fc[var] = fc[var]*3.281 # convert to feet
+        elif var == 'uv':
+            cmap_name = 'mclimate_purple'
+            clevs = np.arange(0., 55., 5.)
+        
+        # Contour Filled (mclimate values)
+        data = ds.sel(step=step)[var].values*100.
+        cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
+        cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                           cmap=cmap, norm=norm, alpha=0.9)
+
+        # Contour Lines (forecast values)
+        forecast = fc[var].sel(step=step)     
+        cs = ax.contour(lons, lats, forecast, transform=datacrs,
+                         levels=clevs, colors='k',
+                         linewidths=0.75, linestyles='solid')
+        plt.clabel(cs, **kw_clabels)
+
+        ## Plot Normalized Vectors
+        kw_quiver = {'headlength': 6, 'headaxislength': 4.5, 'headwidth': 4.5}
+        if var == 'ivt':
+            forecast = fc.sel(step=step) 
+            fc_mask = forecast.where((forecast.ivt > 250.))
+            
+            fcu = fc_mask['ivtu'] / fc_mask['ivt']
+            fcv = fc_mask['ivtv'] / fc_mask['ivt']
+
+            q = ax.quiver(lons, lats, fcu, fcv, color='k', regrid_shape=20,
+                          capstyle='round', units='width', **kw_quiver)
+
+        if var == 'uv':
+            forecast = fc.sel(step=step) 
+            fc_mask = forecast.where((forecast.uv > 20.))
+            
+            fcu = fc_mask['u'] / fc_mask['uv']
+            fcv = fc_mask['v'] / fc_mask['uv']
+
+            q = ax.quiver(lons, lats, fcu, fcv, color='0.7', regrid_shape=20,
+                          capstyle='round', units='width', **kw_quiver)
+        
+        # Add color bar
+        cbax = plt.subplot(gs[row_lst2[i],col]) # colorbar axis
+        cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+        cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
+                      ticklocation = 'bottom', ticks=cbarticks)
+        cb.set_label(cbarlbl, fontsize=11)
+        cb.ax.tick_params(labelsize=12)
+
+        ## add box if domain is NPAC
+        if domain == 'NPAC': 
+            bbox_ext = [-141., -130., 54., 60.]
+            ax.add_patch(mpatches.Rectangle(xy=[bbox_ext[0], bbox_ext[2]], width=bbox_ext[1]-bbox_ext[0], height=bbox_ext[3]-bbox_ext[2],
+                                        fill=False,
+                                        edgecolor='k',
+                                        linewidth=0.75,
+                                        transform=datacrs,
+                                        zorder=199))
+
+        if i == 0:
+            ax.set_title(left_lbl, loc='left', fontsize=10)
+        elif i == 1:
+            ax.set_title(right_lbl, loc='right', fontsize=10)
+
+    #####################
+    ### AR INDEX PLOT ###
+    #####################
+    ax = fig.add_subplot(gs[4, 6], projection=mapcrs)
+    ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=False, right_lats=False, bottom_lons=True)
+    # Contour Filled (mclimate values)
+    data = ds.sel(step=step)['AR_index'].values
+    cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap('ar_index')
+    cf = ax.pcolormesh(lons, lats, data, transform=datacrs,
+                       cmap=cmap, norm=norm, alpha=0.9)
+
+    ## add box if domain is NPAC
+    if domain == 'NPAC': 
+        bbox_ext = [-141., -130., 54., 60.]
+        ax.add_patch(mpatches.Rectangle(xy=[bbox_ext[0], bbox_ext[2]], width=bbox_ext[1]-bbox_ext[0], height=bbox_ext[3]-bbox_ext[2],
+                                    fill=False,
+                                    edgecolor='k',
+                                    linewidth=0.75,
+                                    transform=datacrs,
+                                    zorder=199))
+
+    # Add color bar
+    cbax = plt.subplot(gs[5, 6]) # colorbar axis
+    cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
+    cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
+                  ticklocation = 'bottom', ticks=cbarticks)
+    cb.set_label(cbarlbl, fontsize=11)
+    cb.ax.tick_params(labelsize=12)
+        
+    txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, step)
+    ann_ax = fig.add_subplot(gs[-1, 5:])
+    ann_ax.axis('off')
+    ann_ax.annotate(textwrap.fill(txt, 101), # this is the text
+               (0, 0.3), # these are the coordinates to position the label
+                textcoords="offset points", # how to position the text
+                xytext=(0,-19), # distance from text to points (x,y)
+                ha='left', # horizontal alignment can be left, right or center
+                **kw_ticklabels)
+
+    print(fname)
+    fig.savefig('%s.%s' %(fname, fmt), bbox_inches='tight', dpi=fig.dpi)
+
+    plt.close(fig)
     
 def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     if impact_date == None:
@@ -256,22 +450,13 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     for i, step in enumerate(step_lst):
         print(step)
         out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
-        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK")
+        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK", impact_date=impact_date, fdate=fdate)
         out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
-        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC")
+        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC", impact_date=impact_date, fdate=fdate)
 
-    ## create dataframe with max values
-    print(' ...... creating dataframe with maximum values ...')
-    df, init_time, date_lbl = create_dataframe_max_values(ds3)
-
-    ## save as csv
-    if impact_date is not None:
-        fname = '/expanse/nfs/cw3e/cwp140/images_historical/{1}/mclimate_init{0}.csv'.format(fdate, impact_date)
-        df.to_csv(fname, index=True)
-
-    ######################
-    ### CREATE HEATMAP ###
-    ######################
-    print(' ...... creating heatmap ...')
-    out_fname = fig_path + 'heatmap'
-    plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
+    # ######################
+    # ### CREATE HEATMAP ###
+    # ######################
+    # print(' ...... creating heatmap ...')
+    # out_fname = fig_path + 'heatmap'
+    # plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
