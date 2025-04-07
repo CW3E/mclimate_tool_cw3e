@@ -446,7 +446,9 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     ### CREATE PLOTS ###
     ####################
     print(' ...... creating four panel plot ...')
-    step_lst = ds3.step.values
+    step_lst = np.arange(6, 168+6, 6)
+    ds3 = ds3.sel(step=step_lst)
+    # step_lst = ds3.step.values
     for i, step in enumerate(step_lst):
         print(step)
         out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
