@@ -38,7 +38,7 @@ echo $filename" ready for processing"
 date=`date`
 echo "STARTING MAKING PRODUCTS at "$date
 
-/bin/singularity exec --bind /data:/data,/home:/home,/work:/work,/common:/common -e /data/projects/operations/GEFS_Mclimate/envs/GEFS_Mclimate.sif /opt/conda/envs/container/bin/python /data/projects/operations/GEFS_Mclimate/run_tool.py "$yyyy$m$dd$hh"
+/bin/singularity exec --bind /data:/data,/home:/home,/work:/work,/common:/common -e /data/projects/operations/GEFS_Mclimate/envs/GEFS_Mclimate.sif /opt/conda/envs/container/bin/python /data/projects/operations/GEFS_Mclimate/run_tool.py "$yyyy$mm$dd$hh"
 
 cd /data/projects/operations/GEFS_Mclimate/figs/images_operational/
 try=1
