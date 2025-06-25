@@ -26,9 +26,20 @@ import matplotlib as mpl
 mpl.use('agg')
 
 import custom_cmaps as ccmap
-from plotter import draw_basemap
+from plotter import draw_basemap, set_cw3e_font
 import mclimate_funcs as mclim_func
 
+def compute_ivt_uv_direction_relative_to_slope(forecast):
+    ## read slope_aspect netCDF
+    fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFSv12_reforecast/GEFSv12_slope_aspect.nc'
+    aspect = xr.open_dataset(fname)
+
+    ## calculate different in direction of ivt and uv and aspect
+    ivtdir_diff = (forecast.ivtdir-aspect.aspect) % 360
+    uvdir_diff = (forecast.uvdir-aspect.aspect) % 360
+
+    return ivtdir_diff, uvdir_diff
+    
 def compute_AR_duration_AR_impact_index(ds3):
     ## compute duration of IVT >= 95th percentile
     AR = xr.where(ds3.ivt >= 0.95, 1, 0)
@@ -45,22 +56,39 @@ def compute_AR_duration_AR_impact_index(ds3):
     ds3 = xr.merge([ds3, duration])
 
     ## calculate index score
-    ## +1 Index Point for IVT >= 95th percentile
-    AR1 = xr.where(ds3.ivt >= 0.95, 1, 0)
+    ## +0.5 Index Point for IVT >= 95th percentile
+    AR1 = xr.where(ds3.ivt >= 0.95, 0.5, 0)
     
     ## +1 Index Point for freezing_level >= 95th percentile
     AR2 = xr.where(ds3.freezing_level >= 0.95, 1, 0)
     
-    ## +1 Index Point for uv1000 >= 95th percentile
-    AR3 = xr.where(ds3.uv >= 0.95, 1, 0)
+    ## +0.5 Index Point for uv1000 >= 95th percentile
+    AR3 = xr.where(ds3.uv >= 0.95, 0.5, 0)
     
-    ## +1 Index Point for duration >= 24
-    AR4 = xr.where(ds3.duration >= 24, 1, 0)
+    ## +0.5 Index Point for duration >= 24
+    AR4 = xr.where(ds3.duration >= 24, 0.5, 0)
     
-    ## +1 Index Point for duration >= 48
-    AR5 = xr.where(ds3.duration >= 48, 1, 0)
+    ## +0.5 Index Point for duration >= 48
+    AR5 = xr.where(ds3.duration >= 48, 0.5, 0)
+
+    ## +0.5 Index Point for IVT direction within 60 degrees of aspect
+    da = ds3.ivtdir_diff
+    mask = ((da >= 0) & (da <= 30)) | ((da >= 330) & (da <= 360)) | ((da >= 150) & (da <= 210))
+    AR6 = xr.where(mask, 0.5, 0.0) 
+
+    ## +0.5 Index Point for uv1000 direction within 60 degrees of aspect
+    da = ds3.uvdir_diff
+    mask = ((da >= 0) & (da <= 30)) | ((da >= 330) & (da <= 360)) | ((da >= 150) & (da <= 210))
+    AR7 = xr.where(mask, 0.5, 0.0) 
+
+    ## +0.5 Index Point for QPF >= 95th percentile
+    AR8 = xr.where(ds3.qpf >= 0.95, 0.5, 0)
+
+    ## +0.5 Index Point for QPF >= 98th percentile
+    AR9 = xr.where(ds3.qpf >= 0.98, 0.5, 0)
     
-    AR_index = AR1 + AR2 + AR3 + AR4 + AR5
+    # AR_index = AR1 + AR2 + AR3 + AR4 + AR5
+    AR_index = AR1 + AR2 + AR3 + AR4 + AR5 + AR6 + AR7 + AR8 + AR9
     
     AR_index = AR_index.rename("AR_index")
     ds3 = xr.merge([ds3, AR_index])
@@ -79,7 +107,8 @@ def create_dataframe_max_values(ds3):
     df['ivt'] = df['ivt']*100
     df['freezing_level'] = df['freezing_level']*100
     df['uv'] = df['uv']*100
-    df = df.rename(columns={"ivt": "IVT", "freezing_level": "Freezing Level", "uv": "UV", "duration": "Duration"})
+    df['qpf'] = df['qpf']*100
+    df = df.rename(columns={"ivt": "IVT", "freezing_level": "Freezing Level", "uv": "UV", "duration": "Duration", "qpf": "QPF"})
     
     ## create list of valid dates
     ts = pd.to_datetime(ds3.init_date.values, format="%Y%m%d%H")
@@ -163,14 +192,19 @@ def plot_heatmap(fig, gs, df, init_time, date_lbl, fdate):
                     "ytcklbl" : False,
                     "xtcklbl" : 'DUR'
                   },
+                "QPF": {
+                    "cmap_name" : "mclimate_blue",
+                    "ytcklbl" : False,
+                    "xtcklbl" : 'QPF'
+                  },
                 }
     ext=[-141., -130., 54., 60.]
     
     ## loop through each heatmap
-    varname_lst = ['IVT', 'Freezing Level', 'UV', 'Duration']
-    col_lst = [0, 1, 2, 3]
+    varname_lst = ['IVT', 'Freezing Level', 'UV', 'Duration', 'QPF']
+    col_lst = [0, 1, 2, 3, 4]
     for i, (col, varname) in enumerate(zip(col_lst, varname_lst)):
-        ax = fig.add_subplot(gs[1:-2, col])
+        ax = fig.add_subplot(gs[1:-1, col])
         print(varname)        
         create_mini_heatmap(ax, df, plot_dict[varname]['cmap_name'], varname, 
                             plot_dict[varname]['ytcklbl'], plot_dict[varname]['xtcklbl'])
@@ -180,25 +214,22 @@ def plot_heatmap(fig, gs, df, init_time, date_lbl, fdate):
             lbl_loc = [1, 4.5, 8.5, 12.5, 16.5, 20.5, 24.5, 28.5, 32.5, 36.5]
             for j, datel in enumerate(date_lbl):
                 ## add month day labels
-                kw = {'weight': 'bold', 'size': 9}
+                kw = {'weight': 'bold'}
                 ax.text(-5., lbl_loc[j]+1.25, textwrap.fill(datel, width=3), va='bottom', ha='center',
                     rotation='horizontal', rotation_mode='anchor', **kw)
     
     
-    kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
+    kw_ticklabels = {'color': 'dimgray', 'weight': 'light'}
     domain = u"{:.0f}\N{DEGREE SIGN}N to {:.0f}\N{DEGREE SIGN}N, {:.0f}\N{DEGREE SIGN}W to {:.0f}\N{DEGREE SIGN}W".format(ext[2], ext[3], ext[0], ext[1])
     txt = 'Maximum percentile rank (xth) in {0}'.format(domain)
-    ann_ax = fig.add_subplot(gs[-1, :4])
+    ann_ax = fig.add_subplot(gs[-1, :5])
     ann_ax.axis('off')
     ann_ax.annotate(textwrap.fill(txt, 35), # this is the text
                 (0, 0.), # these are the coordinates to position the label
                 textcoords="offset points", # how to position the text
-                xytext=(-80,10), # distance from text to points (x,y)
+                xytext=(-80,5), # distance from text to points (x,y)
                 ha='left', # horizontal alignment can be left, right or center
                 **kw_ticklabels)
-    
-    # # Save the figure
-    # fig.savefig('%s.%s' % (fname, fmt), bbox_inches='tight', dpi=fig.dpi)
 
     return fig
 
@@ -249,23 +280,30 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
         dy = np.arange(lats.min().round(),lats.max().round()+10,10)
     
     # Create figure
-    fig = plt.figure(figsize=(12, 8.5))
+    fig = plt.figure(figsize=(11.75, 14.))
     fig.dpi = 300
     fmt = 'png'
+
+    current_dpi=300
+    base_dpi=100
+    scaling_factor = (current_dpi / base_dpi)**0.3
+
+    set_cw3e_font(current_dpi, scaling_factor)
     
-    nrows = 8
-    ncols = 7
+    nrows = 9
+    ncols = 8
     
     # contour labels
-    kw_clabels = {'fontsize': 7, 'inline': True, 'inline_spacing': 7, 'fmt': '%i',
+    kw_clabels = {'inline': True, 'inline_spacing': 7, 'fmt': '%i',
                   'rightside_up': True, 'use_clabeltext': True}
     
-    kw_ticklabels = {'size': 10, 'color': 'dimgray', 'weight': 'light'}
+    kw_ticklabels = {'color': 'dimgray', 'weight': 'light'}
     
     ## Use gridspec to set up a plot with a series of subplots that is
     ## n-rows by n-columns
-    gs = GridSpec(nrows, ncols, height_ratios=[0.05, 0.45, 0.05, 0.05, 0.5, 0.05, 0.05, 0.05],
-                  width_ratios = [0.07, 0.07, 0.07, 0.07, 0.1, 1, 1], wspace=0.05, hspace=0.002)
+    gs = GridSpec(nrows, ncols, height_ratios=[0.05, 0.45, 0.05, 0.05, 0.5, 0.05, 0.05, 1, 0.05],
+              width_ratios = [0.08, 0.08, 0.08, 0.08, 0.08, 0.1, 1, 1], wspace=0.05, hspace=0.15)
+
     ## use gs[rows index, columns index] to access grids
 
     ## add heatmap
@@ -280,11 +318,11 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
     fig = plot_heatmap(fig, gs, df, init_time, date_lbl, fdate)
 
     ## mclimate maps
-    row_lst = [0, 0, 4]
-    row_lst2 = [2, 2, 5]
-    col_lst = [5, 6, 5]
-    var_lst = ['ivt', 'freezing_level', 'uv']
-    llat_lst = [True, False, True]
+    row_lst = [0, 0, 4, 4]
+    row_lst2 = [2, 2, 5, 5]
+    col_lst = [6, 7, 6, 7]
+    var_lst = ['ivt', 'freezing_level', 'uv', 'qpf']
+    llat_lst = [True, False, True, False]
     for i, (row, col) in enumerate(zip(row_lst, col_lst)):
         var = var_lst[i]
         ## percentile
@@ -302,6 +340,9 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
         elif var == 'uv':
             cmap_name = 'mclimate_purple'
             clevs = np.arange(0., 55., 5.)
+        elif var == 'qpf':
+            cmap_name = 'mclimate_blue'
+            clevs = [0.1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]
         
         # Contour Filled (mclimate values)
         data = ds.sel(step=step)[var].values*100.
@@ -343,8 +384,7 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
         cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
         cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
                       ticklocation = 'bottom', ticks=cbarticks)
-        cb.set_label(cbarlbl, fontsize=11)
-        cb.ax.tick_params(labelsize=12)
+        cb.set_label(cbarlbl)
 
         ## add box if domain is NPAC
         if domain == 'NPAC': 
@@ -357,15 +397,15 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
                                         zorder=199))
 
         if i == 0:
-            ax.set_title(left_lbl, loc='left', fontsize=10)
+            ax.set_title(left_lbl, loc='left')
         elif i == 1:
-            ax.set_title(right_lbl, loc='right', fontsize=10)
+            ax.set_title(right_lbl, loc='right')
 
     #####################
     ### AR INDEX PLOT ###
     #####################
-    ax = fig.add_subplot(gs[4, 6], projection=mapcrs)
-    ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=False, right_lats=False, bottom_lons=True)
+    ax = fig.add_subplot(gs[7, 6:], projection=mapcrs)
+    ax = draw_basemap(ax, extent=ext, xticks=dx, yticks=dy, left_lats=True, right_lats=False, bottom_lons=True)
     # Contour Filled (mclimate values)
     data = ds.sel(step=step)['AR_index'].values
     cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap('ar_index')
@@ -383,20 +423,19 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
                                     zorder=199))
 
     # Add color bar
-    cbax = plt.subplot(gs[5, 6]) # colorbar axis
+    cbax = plt.subplot(gs[8, 6:]) # colorbar axis
     cbarticks = list(itertools.compress(bnds, cbarticks)) ## this labels the cbarticks based on the cmap dictionary
     cb = Colorbar(ax = cbax, mappable = cf, orientation = 'horizontal', 
                   ticklocation = 'bottom', ticks=cbarticks)
-    cb.set_label(cbarlbl, fontsize=11)
-    cb.ax.tick_params(labelsize=12)
+    cb.set_label(cbarlbl)
         
     txt = 'Relative to all {2}-h GEFSv12 reforecasts initialized between {0} and {1} (2000-2019)'.format(start_date, end_date, step)
-    ann_ax = fig.add_subplot(gs[-1, 5:])
+    ann_ax = fig.add_subplot(gs[6, 6:])
     ann_ax.axis('off')
     ann_ax.annotate(textwrap.fill(txt, 101), # this is the text
                (0, 0.3), # these are the coordinates to position the label
                 textcoords="offset points", # how to position the text
-                xytext=(0,-19), # distance from text to points (x,y)
+                xytext=(0,-24), # distance from text to points (x,y)
                 ha='left', # horizontal alignment can be left, right or center
                 **kw_ticklabels)
 
@@ -417,11 +456,12 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     ### COMPARE FORECAST TO MCLIMATE ###
     ####################################
     print(' ...... running Mclimate comparison ...')
-    var_lst = ['ivt', 'freezing_level', 'uv1000']
+    var_lst = ['qpf', 'ivt', 'freezing_level', 'uv1000']
     ds_lst = []
     ds_lst2 = []
     fc_lst = []
     for i, varname in enumerate(var_lst):
+        print('......... for {0} ...'.format(varname))
         forecast, ds = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='expanse')
         fc_lst.append(forecast)
         ds_lst.append(ds)
@@ -438,8 +478,18 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     
     fc = xr.merge(fc_lst)
     fc = fc.sortby('lat')
+    fc = fc.rename({'tp': 'qpf'})
 
+    ## compute IVT and UV direction relative to topography
+    ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc)
+
+    ## add the dir_diff vars to the final dataset
+    ds3 = ds3.assign({"ivtdir_diff": ivtdir_diff,
+                    "uvdir_diff": uvdir_diff
+                   })
+    
     ## compute AR duration and AR Impact Index value
+    print(ds3)
     ds3 = compute_AR_duration_AR_impact_index(ds3)
 
     ####################

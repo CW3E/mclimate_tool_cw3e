@@ -22,12 +22,35 @@ from matplotlib.colorbar import Colorbar # different way to handle colorbar
 from matplotlib.gridspec import GridSpec
 from datetime import timedelta
 import textwrap
+from matplotlib import font_manager as fm
 
 import matplotlib as mpl
 mpl.use('agg')
 
 ## import personal modules
 import custom_cmaps as ccmap
+
+def set_cw3e_font(current_dpi, scaling_factor):
+    fm.fontManager.addfont('/home/dnash/repos/mclimate_tool_cw3e/utils/fonts/helvetica.ttc')
+
+    plt.rcParams.update({
+                    'font.family' : 'Helvetica',
+                    'figure.dpi': current_dpi,
+                    'font.size': 8 * scaling_factor, #changes axes tick label
+                    'axes.labelsize': 8 * scaling_factor,
+                    'axes.titlesize': 8 * scaling_factor,
+                    'xtick.labelsize': 8 * scaling_factor,#do nothing
+                    'ytick.labelsize': 8 * scaling_factor, #do nothing
+                    'legend.fontsize': 5 * scaling_factor,
+                    'lines.linewidth': 0.7 * scaling_factor,
+                    'axes.linewidth': 0.2 * scaling_factor,
+                    'legend.fontsize': 12 * scaling_factor,
+                    'xtick.major.width': 0.8 * scaling_factor,
+                    'ytick.major.width': 0.8 * scaling_factor,
+                    'xtick.minor.width': 0.6 * scaling_factor,
+                    'ytick.minor.width': 0.6 * scaling_factor,
+                    'lines.markersize': 6 * scaling_factor
+                })
     
 def draw_basemap(ax, datacrs=ccrs.PlateCarree(), extent=None, xticks=None, yticks=None, grid=False, left_lats=True, right_lats=False, bottom_lons=True, mask_ocean=False, coastline=True):
     """
