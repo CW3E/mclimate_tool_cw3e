@@ -137,33 +137,43 @@ def load_mclimate(mon, day, varname, server, F=None):
     return ds
 
 def load_archive_GEFS_forecast(date, varname, F=None):
-    fpath = '/expanse/lustre/scratch/dnash/temp_project/preprocessed/GEFS/'
-    # fpath = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/'
+    print(varname)
+    # fpath = '/expanse/lustre/scratch/dnash/temp_project/preprocessed/GEFS/'
+    fpath = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/'
     ### load forecast from GEFS
     if varname == 'ivt':
         varname = 'IVT'
     elif varname == 'uv1000':
         varname = 'UV1000'
-
-    if F == None:
-        fname_pattern = fpath + '{0}.t00z.0p50.f*.{1}'.format(date, varname)
-        forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
-    else:
-        F = str(F).zfill(3)
-        fname = fpath + '{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
-        forecast = xr.open_dataset(fname)
     
+    if varname == 'qpf':
+        ## load single file
+        fname = fpath + '{0}.t00z.0p50.f003-f168.qpf'.format(date)
+        forecast = xr.open_dataset(fname, engine='netcdf4')
+    elif varname != 'qpf':
+        if F == None:
+            fname_pattern = fpath + '{0}.t00z.0p50.f*.{1}'.format(date, varname)
+            print(fname_pattern)
+            forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
+        else:
+            F = str(F).zfill(3)
+            fname = fpath + '{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
+            forecast = xr.open_dataset(fname)
+        
     forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 
                                   "time": "init_date"}) # need to rename this to match GEFSv12 Reforecast
     if varname == 'freezing_level':
         forecast = forecast.rename({"gh": "freezing_level"})
-    if varname == 'UV1000':
+    elif varname == 'UV1000':
         uv = np.sqrt(forecast.u**2 + forecast.v**2)
         if F == None:
             forecast = forecast.assign(uv=(['step', 'lat','lon'],uv.data))
         else:
             forecast = forecast.assign(uv=(['lat','lon'],uv.data))
         # forecast = forecast.drop_vars(["u", "v"])
+
+    else:
+        pass
         
     forecast = forecast.assign_coords({"lon": (((forecast.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
     s = forecast.step.values
