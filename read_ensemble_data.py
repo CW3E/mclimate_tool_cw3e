@@ -143,7 +143,7 @@ class load_GEFS_datasets:
         ## Read QPF data for all time steps
         ds_lst = []
         for i, F in enumerate(np.arange(3, 169, 3)):
-            fname = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(self.F).zfill(3))
+            fname = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(F).zfill(3))
             dsa = xr.open_dataset(fname, engine='cfgrib',filter_by_keys=gfs_vardict['prec'])
             dsa = dsa.expand_dims(dim='step')
             ds_lst.append(dsa)

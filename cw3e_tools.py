@@ -123,7 +123,7 @@ class load_GEFS_datasets:
             
             # pull the initialization date from the filename
             regex = re.compile(r'\d+')
-            self.date_string = regex.findall(self.fname)[1]
+            self.date_string = regex.findall(self.fname)[0]
 
         if fdate is not None:
             self.date_string = fdate
@@ -141,7 +141,6 @@ class load_GEFS_datasets:
         # ds = ds.drop_vars(["uIVT", "vIVT"])
         ds = ds.rename({'uIVT': 'ivtu', 'vIVT': 'ivtv'})
         ds = ds.assign_coords({"init_date": (self.model_init_date)})
-        print(ds)
         ## modifications to file regardless of variable
         ds = ds.assign_coords({"lon": (((ds.lon + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
         ds = ds.sel(lon=slice(-179.5, -110.), lat=slice(70., 10.)) ## subset to SEAK domain
