@@ -23,7 +23,7 @@ mpl.use('agg')
 import mclimate_funcs as mclim_func
 from read_ensemble_data import load_GEFS_datasets
 from cw3e_tools import remove_tmp_data_files
-from plot_four_panel_fig import plot_mclimate_forecast_four_panel, compute_AR_duration_AR_impact_index
+from plot_four_panel_fig import plot_mclimate_forecast_four_panel, compute_AR_duration_AR_impact_index, compute_ivt_uv_direction_relative_to_slope
 
 sys.argv.append(None) ## add this in case date not specified in command line
 fdate = sys.argv[1] ## set this to None to get most recently downloaded data  
@@ -108,6 +108,14 @@ ds3 = ds3.rename({'mclimate': 'qpf'})
 ### merge the datasets
 ds_final = xr.merge([ds, ds1, ds2, ds3])
 ds_final = ds_final.sortby('lat')
+
+## compute IVT and UV direction relative to topography
+ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc)
+
+## add the dir_diff vars to the final dataset
+ds3 = ds3.assign({"ivtdir_diff": ivtdir_diff,
+                "uvdir_diff": uvdir_diff
+               })
 
 ## compute AR duration and AR Impact Index value
 ds_final = compute_AR_duration_AR_impact_index(ds_final)
