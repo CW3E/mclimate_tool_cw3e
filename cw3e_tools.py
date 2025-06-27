@@ -90,6 +90,8 @@ def load_intermediate_GEFS(varname):
     
     # Convert step to hours
     ds['step'] = (ds['step'] / pd.Timedelta(hours=1)).astype(int)
+    ## subset to 6 hourly
+    ds = ds.sel(step=np.arange(6, 169, 6))
 
     ds = ds.load()  
     
