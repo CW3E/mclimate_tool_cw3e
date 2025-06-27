@@ -29,9 +29,13 @@ import custom_cmaps as ccmap
 from plotter import draw_basemap, set_cw3e_font
 import mclimate_funcs as mclim_func
 
-def compute_ivt_uv_direction_relative_to_slope(forecast):
+def compute_ivt_uv_direction_relative_to_slope(forecast, server='skyriver'):
     ## read slope_aspect netCDF
-    fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFSv12_reforecast/GEFSv12_slope_aspect.nc'
+    if server == 'expanse':
+        fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFSv12_reforecast/GEFSv12_slope_aspect.nc'
+        
+    else:
+        fname = '/data/projects/operations/GEFS_Mclimate/data/GEFSv12_slope_aspect.nc'
     aspect = xr.open_dataset(fname)
 
     ## calculate different in direction of ivt and uv and aspect
