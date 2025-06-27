@@ -82,7 +82,7 @@ if __name__ == '__main__':
 ### PREP QPF DATA ###
 #####################
 print('... Preprocessing QPF data ...')
-s = load_GEFS_datasets(F=F, fdate=fdate)
+s = load_GEFS_datasets(F=None, fdate=fdate)
 model_data= s.calc_qpf()
 
 ##############################
