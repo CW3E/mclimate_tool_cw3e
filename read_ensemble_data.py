@@ -137,15 +137,11 @@ class load_GEFS_datasets:
         gefs_vardict = {"prec":{'name': 'Total Precipitation', 'typeOfLevel': 'surface', 'level': 0, 'paramId': 228228, 'shortName': 'tp'} #total precipitation
                        }
         
-        #gefs is a dictionary of datasets
-        gefs = read_gefs_ensemble(filename=self.fname,vardict=gefs_vardict, show_catalog=False)
-        
         ## Read QPF data for all time steps
         ds_lst = []
         for i, F in enumerate(np.arange(3, 169, 3)):
             fname_qpf = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(F).zfill(3))
-            print(fname_qpf)
-            dsa = xr.open_dataset(fname_qpf, engine='cfgrib',filter_by_keys=gfs_vardict['prec'])
+            dsa = xr.open_dataset(fname_qpf, engine='cfgrib',filter_by_keys=gefs_vardict['prec'])
             dsa = dsa.expand_dims(dim='step')
             ds_lst.append(dsa)
 
