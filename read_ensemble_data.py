@@ -164,6 +164,9 @@ class load_GEFS_datasets:
         new_prec = prec_3hr.combine_first(prec_6hr) # combine the correct 3hr values with the correct 6hr values
         ds = ds.drop_vars(["tp"]) # get rid of old tp (accumulated variable)
         ds = xr.merge([ds, new_prec]) # merge dataset with new tp
+        
+        ## compute ensemble mean
+        ds = ds.mean('number')
 
         ## save as netCDF
         ## save data to netCDF file

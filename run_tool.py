@@ -78,11 +78,12 @@ if __name__ == '__main__':
             pool.join()
             
             
-######################
-### PREPROCESS QPF ###
-######################
-s = load_GEFS_datasets(F=None, fdate=fdate)
-model_data = s.calc_qpf()
+#####################
+### PREP QPF DATA ###
+#####################
+print('... Preprocessing QPF data ...')
+s = load_GEFS_datasets(F=F, fdate=fdate)
+model_data= s.calc_qpf()
 
 ##############################
 ### LOAD INTERMEDIATE DATA ###
