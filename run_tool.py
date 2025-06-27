@@ -103,7 +103,7 @@ print('...Reading QPF data for M-Climate comparison')
 varname = 'qpf'
 forecast3, ds3 = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='skyriver')
 ds3 = ds3.rename({'mclimate': 'qpf'})
-
+forecast3 = forecast3.rename({'tp': 'qpf'})
 
 ### merge the datasets
 ds_final = xr.merge([ds, ds1, ds2, ds3])
