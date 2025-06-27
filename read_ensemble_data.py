@@ -138,6 +138,7 @@ class load_GEFS_datasets:
                        }
         
         ## Read QPF data for all time steps
+        print("Reading grb files for qpf...")
         ds_lst = []
         for i, F in enumerate(np.arange(3, 169, 3)):
             fname_qpf = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(F).zfill(3))
@@ -153,6 +154,7 @@ class load_GEFS_datasets:
         ds = ds.sel(latitude=slice(70, 0), longitude=slice(-179.5, -60.))
         
         ## run preprocess
+        print("Preprocessing precipitation...")
         ## convert precipitation to mm per hour
         ts_3hr = pd.timedelta_range(start='0 day', periods=57, freq='3H')
         ts_6hr = pd.timedelta_range(start='0 day', periods=29, freq='6H')
@@ -167,7 +169,7 @@ class load_GEFS_datasets:
         
         ## compute ensemble mean
         ds = ds.mean('number')
-
+        print("Saving QPF as netcdf...")
         ## save as netCDF
         ## save data to netCDF file
         print('Writing {0} to netCDF ....'.format('qpf'))
