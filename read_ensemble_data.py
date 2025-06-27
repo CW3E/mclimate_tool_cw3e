@@ -144,6 +144,7 @@ class load_GEFS_datasets:
             fname_qpf = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(F).zfill(3))
             dsa = xr.open_dataset(fname_qpf, engine='cfgrib',filter_by_keys=gefs_vardict['prec'])
             dsa = dsa.expand_dims(dim='step')
+            print(dsa)
             ds_lst.append(dsa)
 
         ds = xr.concat(ds_lst, dim='step')
@@ -168,6 +169,7 @@ class load_GEFS_datasets:
         ds = xr.merge([ds, new_prec]) # merge dataset with new tp
         
         ## compute ensemble mean
+        print(ds)
         ds = ds.mean('number')
         print("Saving QPF as netcdf...")
         ## save as netCDF
