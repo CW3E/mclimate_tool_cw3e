@@ -71,17 +71,27 @@ def myround(x, base=5):
     return base * round(x/base)
 
 def load_intermediate_GEFS(varname):
+    path_to_data = '/data/projects/operations/GEFS_Mclimate/data/tmp/'
     if varname == 'freezing_level':
-        varname1 = "uv"
+        varname1 = ["uv"]
     elif varname == 'uv1000':
-        varname1 = 'freezing_level'
-    ## load intermediate data
-    filename_pattern = '/data/projects/operations/GEFS_Mclimate/data/tmp/tmp_GEFS_*.nc'
-    ds = xr.open_mfdataset(filename_pattern, combine='nested', concat_dim='step', drop_variables=[varname1] )
-    ds = ds.sortby('step')
-    # Convert to hours
+        varname1 = ['freezing_level']
+        
+    if varname == 'qpf':
+        ## open single file
+        fname = path_to_data + 'QPF.t00z.0p50.f003-f168.tmp'
+        ds = xr.open_dataset(fname)
+    else:
+        ## open multiple files
+        filename_pattern =  path_to_data + 'tmp_GEFS_*.nc'
+        ds = xr.open_mfdataset(filename_pattern, combine='nested', concat_dim='step', drop_variables=varname1 )
+        ds = ds.sortby('step')
+    
+    
+    # Convert step to hours
     ds['step'] = (ds['step'] / pd.Timedelta(hours=1)).astype(int)
-    ds = ds.load()
+
+    ds = ds.load()  
     
     return ds
 

@@ -77,7 +77,7 @@ class load_GEFS_datasets:
         xarray dataset object with variables
     
     '''
-    def __init__(self, F, fdate=None):
+    def __init__(self, F=None, fdate=None):
         print('Preprocessing {0} ...'.format(F))
         self.F = F
         path_to_data = '/data/projects/external_datasets/GEFS/processed/*/'
@@ -89,7 +89,6 @@ class load_GEFS_datasets:
         elif fdate is not None:
             self.date_string = fdate
             self.fpath = '/data/projects/external_datasets/GEFS/processed/{0}/'.format(self.date_string)
-        
         fname = 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(self.F).zfill(3))
         self.fname = self.fpath+fname
 
@@ -97,7 +96,7 @@ class load_GEFS_datasets:
         ## dictionary of variables we need for the cross section
         gefs_vardict = {"freezing_level": {'dataType': 'pf', 'typeOfLevel': 'isothermZero', 'shortName': 'gh'}, ## freezing level
                         "u_wind":{'dataType': 'pf', "typeOfLevel":'isobaricInhPa',"shortName":"u"}, #U-component of wind
-                        "v_wind":{'dataType': 'pf', "typeOfLevel":'isobaricInhPa',"shortName":"v"} #V-component of wind
+                        "v_wind":{'dataType': 'pf', "typeOfLevel":'isobaricInhPa',"shortName":"v"}, #V-component of wind
                        }
         
         #gefs is a dictionary of datasets
@@ -130,4 +129,51 @@ class load_GEFS_datasets:
         ds.to_netcdf(path=out_fname, mode = 'w', format='NETCDF4')
         ds.close() ## close data
 
-        return ds
+        return None
+
+    
+    def calc_qpf(self):
+        
+        gefs_vardict = {"prec":{'name': 'Total Precipitation', 'typeOfLevel': 'surface', 'level': 0, 'paramId': 228228, 'shortName': 'tp'} #total precipitation
+                       }
+        
+        #gefs is a dictionary of datasets
+        gefs = read_gefs_ensemble(filename=self.fname,vardict=gefs_vardict, show_catalog=False)
+        
+        ## Read QPF data for all time steps
+        ds_lst = []
+        for i, F in enumerate(np.arange(3, 169, 3)):
+            fname = self.fpath + 'gefs_{0}_F{1}.grb2'.format(self.date_string, str(self.F).zfill(3))
+            dsa = xr.open_dataset(fname, engine='cfgrib',filter_by_keys=gfs_vardict['prec'])
+            dsa = dsa.expand_dims(dim='step')
+            ds_lst.append(dsa)
+
+        ds = xr.concat(ds_lst, dim='step')
+
+        ## fix lons 
+        ds = ds.assign_coords({"longitude": (((ds.longitude + 180) % 360) - 180)}) # Convert DataArray longitude coordinates from 0-359 to -180-179
+        ## subset to N. America [0, 70, 180, 295]
+        ds = ds.sel(latitude=slice(70, 0), longitude=slice(-179.5, -60.))
+        
+        ## run preprocess
+        ## convert precipitation to mm per hour
+        ts_3hr = pd.timedelta_range(start='0 day', periods=57, freq='3H')
+        ts_6hr = pd.timedelta_range(start='0 day', periods=29, freq='6H')
+        tp = ds.tp ## pull out tp
+        prec_3hr = tp.sel(step=ts_3hr[1::2]) ## grab only the 3hr values
+        tp2 = tp.diff(dim='step') ## calculate difference in precip
+        ## the values for 6hr timesteps are correct, the values for 3hr timesteps are incorrect
+        prec_6hr = tp2.sel(step=ts_6hr[1:]) # grab only the 6hr values
+        new_prec = prec_3hr.combine_first(prec_6hr) # combine the correct 3hr values with the correct 6hr values
+        ds = ds.drop_vars(["tp"]) # get rid of old tp (accumulated variable)
+        ds = xr.merge([ds, new_prec]) # merge dataset with new tp
+
+        ## save as netCDF
+        ## save data to netCDF file
+        print('Writing {0} to netCDF ....'.format('qpf'))
+        path_to_out = '/data/projects/operations/GEFS_Mclimate/data/tmp/'
+        out_fname = 'QPF.t00z.0p50.f003-f168.tmp'
+        ds.to_netcdf(path=path_to_out + out_fname, mode = 'w', format='NETCDF4')
+        ds.close() ## close data
+        
+        return None
