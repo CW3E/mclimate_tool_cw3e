@@ -109,19 +109,19 @@ ds3 = ds3.rename({'mclimate': 'qpf'})
 ds_final = xr.merge([ds, ds1, ds2, ds3])
 ds_final = ds_final.sortby('lat')
 
+fc = xr.merge([forecast, forecast1, forecast2])
+fc = fc.sortby('lat')
+
 ## compute IVT and UV direction relative to topography
 ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc)
 
 ## add the dir_diff vars to the final dataset
-ds3 = ds3.assign({"ivtdir_diff": ivtdir_diff,
+ds_final = ds_final.assign({"ivtdir_diff": ivtdir_diff,
                 "uvdir_diff": uvdir_diff
                })
 
 ## compute AR duration and AR Impact Index value
 ds_final = compute_AR_duration_AR_impact_index(ds_final)
-
-fc = xr.merge([forecast, forecast1, forecast2])
-fc = fc.sortby('lat')
 
 ####################
 ### CREATE PLOTS ###
