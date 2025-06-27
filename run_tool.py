@@ -109,7 +109,7 @@ forecast3 = forecast3.rename({'tp': 'qpf'})
 ds_final = xr.merge([ds, ds1, ds2, ds3])
 ds_final = ds_final.sortby('lat')
 
-fc = xr.merge([forecast, forecast1, forecast2])
+fc = xr.merge([forecast, forecast1, forecast2, forecast3])
 fc = fc.sortby('lat')
 
 ## compute IVT and UV direction relative to topography
