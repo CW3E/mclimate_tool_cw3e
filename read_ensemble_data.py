@@ -134,7 +134,7 @@ class load_GEFS_datasets:
     
     def calc_qpf(self):
         
-        gefs_vardict = {"prec":{'dataType': 'cf', 'name': 'Total Precipitation', 'typeOfLevel': 'surface', 'level': 0, 'paramId': 228228, 'shortName': 'tp'} #total precipitation
+        gefs_vardict = {"prec":{'dataType': 'pf', 'name': 'Total Precipitation', 'typeOfLevel': 'surface', 'level': 0, 'paramId': 228228, 'shortName': 'tp'} #total precipitation
                        }
         
         ## Read QPF data for all time steps
