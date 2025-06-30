@@ -34,7 +34,10 @@ fdate = sys.argv[1] ## set this to None to get most recently downloaded data
 print('Removing tmp intermediate data files...') 
 # Specify the directory and the pattern
 directory = "/data/projects/operations/GEFS_Mclimate/data/tmp/"
-pattern = "*tmp*.nc"  # Delete all .txt files
+pattern = "tmp*.nc"  # Delete all .txt files
+remove_tmp_data_files(directory, pattern)
+
+pattern = "QPF*"  # Delete all .txt files
 remove_tmp_data_files(directory, pattern)
 
 ######################
