@@ -29,7 +29,7 @@ import custom_cmaps as ccmap
 from plotter import draw_basemap, set_cw3e_font
 import mclimate_funcs as mclim_func
 
-def compute_ivt_uv_direction_relative_to_slope(forecast, server='skyriver'):
+def compute_ivt_uv_direction_relative_to_slope(forecast, server='expanse'):
     ## read slope_aspect netCDF
     if server == 'expanse':
         fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFSv12_reforecast/GEFSv12_slope_aspect.nc'
@@ -236,6 +236,22 @@ def plot_heatmap(fig, gs, df, init_time, date_lbl, fdate):
                 **kw_ticklabels)
 
     return fig
+
+def create_csv_max_values_only(ds, fdate):
+    # create dataframe with max values
+    print(' ...... creating dataframe with maximum values ...')
+    df, init_time, date_lbl = create_dataframe_max_values(ds)
+
+    ## save as csv
+    out_path = '/expanse/nfs/cw3e/cwp140/csv_non-landslide_historical/'
+    # Ensure directory exists
+    output_dir = os.path.dirname(out_path)
+    os.makedirs(out_path, exist_ok=True)
+    
+    csv_fname = out_path + 'mclimate_init{0}.csv'.format(fdate)
+    df.to_csv(csv_fname, index=True)
+
+    return None
 
 def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, fdate):
     if domain == 'SEAK':
@@ -448,7 +464,7 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
 
     plt.close(fig)
     
-def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
+def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=True):
     if impact_date == None:
         fig_path = '/expanse/nfs/cw3e/cwp140/images_operational/mclimate_{0}/'.format(fdate)
     else: 
@@ -496,23 +512,19 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None):
     print(ds3)
     ds3 = compute_AR_duration_AR_impact_index(ds3)
 
-    ####################
-    ### CREATE PLOTS ###
-    ####################
-    print(' ...... creating four panel plot ...')
-    step_lst = np.arange(6, 168+6, 6)
-    ds3 = ds3.sel(step=step_lst)
-    # step_lst = ds3.step.values
-    for i, step in enumerate(step_lst):
-        print(step)
-        out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
-        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK", impact_date=impact_date, fdate=fdate)
-        out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
-        plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC", impact_date=impact_date, fdate=fdate)
-
-    # ######################
-    # ### CREATE HEATMAP ###
-    # ######################
-    # print(' ...... creating heatmap ...')
-    # out_fname = fig_path + 'heatmap'
-    # plot_heatmap(df, init_time, date_lbl, fdate, out_fname)
+    if plot == False:
+        create_csv_max_values_only(ds3, fdate)
+    elif plot == True:
+        ####################
+        ### CREATE PLOTS ###
+        ####################
+        print(' ...... creating four panel plot ...')
+        step_lst = np.arange(6, 168+6, 6)
+        ds3 = ds3.sel(step=step_lst)
+        # step_lst = ds3.step.values
+        for i, step in enumerate(step_lst):
+            print(step)
+            out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
+            plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK", impact_date=impact_date, fdate=fdate)
+            out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
+            plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC", impact_date=impact_date, fdate=fdate)
