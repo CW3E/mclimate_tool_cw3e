@@ -103,11 +103,13 @@ def create_dataframe_max_values(ds3):
     ## create table with max value within extent
     ext=[-141., -130., 54., 60.]
     tmp = ds3.sel(lat=slice(ext[2], ext[3]), lon=slice(ext[0], ext[1]))
-    maxval = tmp.max(dim=['lat', 'lon']).fillna(0)
-    
-    
+    # maxval = tmp.max(dim=['lat', 'lon']).fillna(0) ## find max value in domain
+    # df = maxval.to_dataframe()
+    # df = df.drop(['init_date'], axis=1)
+    maxval = tmp.quantile(0.9, dim=['lat', 'lon']).fillna(0) # find 90th percentile value in domain
     df = maxval.to_dataframe()
-    df = df.drop(['init_date'], axis=1)
+    df = df.drop(['quantile'], axis=1)
+    
     df['ivt'] = df['ivt']*100
     df['freezing_level'] = df['freezing_level']*100
     df['uv'] = df['uv']*100
