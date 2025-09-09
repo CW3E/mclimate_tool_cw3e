@@ -270,7 +270,7 @@ def create_csv_max_values_only(ds, fdate):
 
     return None
 
-def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, fdate):
+def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, fdate, server='expanse'):
     if domain == 'SEAK':
         ext = [-141., -130., 54., 60.]
 
@@ -325,7 +325,7 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
     base_dpi=100
     scaling_factor = (current_dpi / base_dpi)**0.3
 
-    set_cw3e_font(current_dpi, scaling_factor)
+    set_cw3e_font(current_dpi, scaling_factor, server)
     
     nrows = 9
     ncols = 8

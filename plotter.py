@@ -30,9 +30,11 @@ mpl.use('agg')
 ## import personal modules
 import custom_cmaps as ccmap
 
-def set_cw3e_font(current_dpi, scaling_factor):
-    # fm.fontManager.addfont('/data/projects/operations/GEFS_Mclimate/utils/fonts/helvetica.ttc')
-    fm.fontManager.addfont('/cw3e/mead/projects/cwp140/repos/mclimate_tool_cw3e/utils/fonts/helvetica.ttc')
+def set_cw3e_font(current_dpi, scaling_factor, server='expanse'):
+    if server == 'expanse':
+        fm.fontManager.addfont('/cw3e/mead/projects/cwp140/repos/mclimate_tool_cw3e/utils/fonts/helvetica.ttc')
+    else:
+        fm.fontManager.addfont('/data/projects/operations/GEFS_Mclimate/utils/fonts/helvetica.ttc')
 
     plt.rcParams.update({
                     'font.family' : 'Helvetica',

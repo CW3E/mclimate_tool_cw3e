@@ -134,9 +134,9 @@ step_lst = ds_final.step.values
 for i, step in enumerate(step_lst):
     print(step)
     out_fname = fig_path + 'SEAK_mclimate_F{0}'.format(step)
-    plot_mclimate_forecast_four_panel(ds_final, fc, step, out_fname, domain="SEAK", impact_date=None, fdate=fdate)
+    plot_mclimate_forecast_four_panel(ds_final, fc, step, out_fname, domain="SEAK", impact_date=None, fdate=fdate, server='skyriver')
     out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
-    plot_mclimate_forecast_four_panel(ds_final, fc, step, out_fname, domain="NPAC", impact_date=None, fdate=fdate)
+    plot_mclimate_forecast_four_panel(ds_final, fc, step, out_fname, domain="NPAC", impact_date=None, fdate=fdate, server='skyriver')
 
         
 ########################
