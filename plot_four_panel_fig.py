@@ -68,6 +68,7 @@ def compute_AR_duration_AR_impact_index(ds3):
     ## calculate index score
     ## +0.5 Index Point for IVT >= 95th percentile
     AR1 = xr.where(ds3.ivt >= 0.95, 0.5, 0)
+    ARIVT = xr.where(ds3.ivt >= 0.98, 0.5, 0)
 
     ## check if init date is between Oct 15 and May 1
     ## if yes, then a point can be assigned
@@ -105,7 +106,7 @@ def compute_AR_duration_AR_impact_index(ds3):
     AR9 = xr.where(ds3.qpf >= 0.98, 0.5, 0)
     
     # AR_index = AR1 + AR2 + AR3 + AR4 + AR5
-    AR_index = AR1 + AR2 + AR3 + AR4 + AR5 + AR6 + AR7 + AR8 + AR9
+    AR_index = AR1 + AR2 + AR3 + AR4 + AR5 + AR6 + AR7 + AR8 + AR9 + ARIVT
     
     AR_index = AR_index.rename("AR_index")
     ds3 = xr.merge([ds3, AR_index])
