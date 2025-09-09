@@ -116,7 +116,7 @@ fc = xr.merge([forecast, forecast1, forecast2, forecast3])
 fc = fc.sortby('lat')
 
 ## compute IVT and UV direction relative to topography
-ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc)
+ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc, server='skyriver')
 
 ## add the dir_diff vars to the final dataset
 ds_final = ds_final.assign({"ivtdir_diff": ivtdir_diff,
