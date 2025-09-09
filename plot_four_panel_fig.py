@@ -33,7 +33,7 @@ import globalvars
 
 path_to_data = globalvars.path_to_data
 
-def compute_ivt_uv_direction_relative_to_slope(forecast, fdate, server='expanse'):
+def compute_ivt_uv_direction_relative_to_slope(forecast, fdate=None, server='expanse'):
     ## read slope_aspect netCDF
     if server == 'expanse':
         fname = f"/dev/shm/GEFSv12_slope_aspect_{fdate}.nc"
