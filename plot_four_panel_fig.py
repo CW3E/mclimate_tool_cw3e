@@ -1,7 +1,7 @@
 """
-Filename:    plotter.py
+Filename:    plot_four_panel_fig.py
 Author:      Deanna Nash, dnash@ucsd.edu
-Description: Functions for loading GEFS_reforecast, GEFS_archive, or GEFS_operational data, comparing to mclimate, then creating a four panel map with Mclimate ranks and a heatmap with maximum Mclimate rank within Southeast Alaska.
+Description: Functions for creating a four panel map with Mclimate ranks and a heatmap with maximum Mclimate rank within Southeast Alaska.
 """
 
 ## import libraries
@@ -13,26 +13,30 @@ import numpy as np
 from datetime import timedelta
 import glob
 import itertools
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import gc
 
 # plotting
 import seaborn as sns
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import cartopy.crs as ccrs
 from matplotlib.gridspec import GridSpec
 from matplotlib.colorbar import Colorbar # different way to handle colorbar
 import textwrap
-import matplotlib as mpl
-mpl.use('agg')
 
 import custom_cmaps as ccmap
 from plotter import draw_basemap, set_cw3e_font
 import mclimate_funcs as mclim_func
+import globalvars
 
-def compute_ivt_uv_direction_relative_to_slope(forecast, server='expanse'):
+path_to_data = globalvars.path_to_data
+
+def compute_ivt_uv_direction_relative_to_slope(forecast, fdate, server='expanse'):
     ## read slope_aspect netCDF
     if server == 'expanse':
-        fname = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFSv12_reforecast/GEFSv12_slope_aspect.nc'
+        fname = f"/dev/shm/GEFSv12_slope_aspect_{fdate}.nc"
         
     else:
         fname = '/data/projects/operations/GEFS_Mclimate/data/GEFSv12_slope_aspect.nc'
@@ -41,6 +45,8 @@ def compute_ivt_uv_direction_relative_to_slope(forecast, server='expanse'):
     ## calculate different in direction of ivt and uv and aspect
     ivtdir_diff = (forecast.ivtdir-aspect.aspect) % 360
     uvdir_diff = (forecast.uvdir-aspect.aspect) % 360
+    aspect.close()
+    del aspect 
 
     return ivtdir_diff, uvdir_diff
     
@@ -62,9 +68,16 @@ def compute_AR_duration_AR_impact_index(ds3):
     ## calculate index score
     ## +0.5 Index Point for IVT >= 95th percentile
     AR1 = xr.where(ds3.ivt >= 0.95, 0.5, 0)
-    
-    ## +1 Index Point for freezing_level >= 95th percentile
-    AR2 = xr.where(ds3.freezing_level >= 0.95, 1, 0)
+
+    ## check if init date is between Oct 15 and May 1
+    ## if yes, then a point can be assigned
+    da = ds3.init_date
+    cond = ( (da.dt.month > 10) | ((da.dt.month == 10) & (da.dt.day > 15)) ) | (da.dt.month < 5)
+    if cond == True:
+        ## +1 Index Point for freezing_level >= 95th percentile
+        AR2 = xr.where(ds3.freezing_level >= 0.95, 1, 0)
+    else:
+        AR2 = xr.where(ds3.freezing_level >= 0.95, 0, 0)
     
     ## +0.5 Index Point for uv1000 >= 95th percentile
     AR3 = xr.where(ds3.uv >= 0.95, 0.5, 0)
@@ -103,12 +116,14 @@ def create_dataframe_max_values(ds3):
     ## create table with max value within extent
     ext=[-141., -130., 54., 60.]
     tmp = ds3.sel(lat=slice(ext[2], ext[3]), lon=slice(ext[0], ext[1]))
-    # maxval = tmp.max(dim=['lat', 'lon']).fillna(0) ## find max value in domain
-    # df = maxval.to_dataframe()
-    # df = df.drop(['init_date'], axis=1)
-    maxval = tmp.quantile(0.9, dim=['lat', 'lon']).fillna(0) # find 90th percentile value in domain
+    ## find max value in domain
+    maxval = tmp.max(dim=['lat', 'lon']).fillna(0) 
     df = maxval.to_dataframe()
-    df = df.drop(['quantile'], axis=1)
+    df = df.drop(['init_date'], axis=1)
+    ## find 90th percentile value in domain
+    # maxval = tmp.quantile(0.9, dim=['lat', 'lon']).fillna(0) 
+    # df = maxval.to_dataframe()
+    # df = df.drop(['quantile'], axis=1)
     
     df['ivt'] = df['ivt']*100
     df['freezing_level'] = df['freezing_level']*100
@@ -245,7 +260,7 @@ def create_csv_max_values_only(ds, fdate):
     df, init_time, date_lbl = create_dataframe_max_values(ds)
 
     ## save as csv
-    out_path = '/expanse/nfs/cw3e/cwp140/csv_non-landslide_historical/'
+    out_path = path_to_data+'mclimate_csv/'
     # Ensure directory exists
     output_dir = os.path.dirname(out_path)
     os.makedirs(out_path, exist_ok=True)
@@ -334,11 +349,16 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
     df, init_time, date_lbl = create_dataframe_max_values(ds)
 
     ## save as csv
-    if impact_date is not None:
-        csv_fname = '/expanse/nfs/cw3e/cwp140/images_historical/{1}/mclimate_init{0}.csv'.format(fdate, impact_date)
-        df.to_csv(csv_fname, index=True)
+    out_path = path_to_data+'mclimate_csv/'
+    # Ensure directory exists
+    output_dir = os.path.dirname(out_path)
+    os.makedirs(out_path, exist_ok=True)
+    
+    csv_fname = out_path + 'mclimate_init{0}.csv'.format(fdate)
+    df.to_csv(csv_fname, index=True)
+    print(' ...... Plotting Heatmaps ...')
     fig = plot_heatmap(fig, gs, df, init_time, date_lbl, fdate)
-
+    print(' ...... Plotting Mclimate maps ...')
     ## mclimate maps
     row_lst = [0, 0, 4, 4]
     row_lst2 = [2, 2, 5, 5]
@@ -467,11 +487,7 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
     plt.close(fig)
     
 def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=True):
-    if impact_date == None:
-        fig_path = '/expanse/nfs/cw3e/cwp140/images_operational/mclimate_{0}/'.format(fdate)
-    else: 
-        fig_path = '/expanse/nfs/cw3e/cwp140/images_historical/{1}/mclimate_{0}/'.format(fdate, impact_date)
-    
+    fig_path = path_to_data+'mclimate_images/mclimate_{0}/'.format(fdate)  
     os.makedirs(os.path.dirname(fig_path), exist_ok=True)
     
     ####################################
@@ -480,37 +496,40 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=T
     print(' ...... running Mclimate comparison ...')
     var_lst = ['qpf', 'ivt', 'freezing_level', 'uv1000']
     ds_lst = []
-    ds_lst2 = []
     fc_lst = []
     for i, varname in enumerate(var_lst):
         print('......... for {0} ...'.format(varname))
         forecast, ds = mclim_func.run_compare_mclimate_forecast(varname, fdate, model, server='expanse')
         fc_lst.append(forecast)
-        ds_lst.append(ds)
-    
         if varname == 'uv1000':
                 ds = ds.rename({'mclimate': 'uv'})
         else:
             ds = ds.rename({'mclimate': varname})
-        ds_lst2.append(ds)
+        ds_lst.append(ds)
+        ds.close()
+        forecast.close()
         
     ### merge the datasets
-    ds3 = xr.merge(ds_lst2)
+    ds3 = xr.merge(ds_lst)
     ds3 = ds3.sortby('lat')
     
     fc = xr.merge(fc_lst)
     fc = fc.sortby('lat')
     fc = fc.rename({'tp': 'qpf'})
 
+    ## delete ds_lst and fc_lst
+    del ds_lst
+    del fc_lst
+
     ## compute IVT and UV direction relative to topography
-    ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc)
+    ivtdir_diff, uvdir_diff = compute_ivt_uv_direction_relative_to_slope(fc, fdate)
 
     ## add the dir_diff vars to the final dataset
     ds3 = ds3.assign({"ivtdir_diff": ivtdir_diff,
                     "uvdir_diff": uvdir_diff
                    })
     
-    ## compute AR duration and AR Impact Index value
+    ## compute AR duration and AR Hazard Index value
     print(ds3)
     ds3 = compute_AR_duration_AR_impact_index(ds3)
 
@@ -523,6 +542,8 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=T
         print(' ...... creating four panel plot ...')
         step_lst = np.arange(6, 168+6, 6)
         ds3 = ds3.sel(step=step_lst)
+        print("Running gc.collect()")
+        gc.collect()
         # step_lst = ds3.step.values
         for i, step in enumerate(step_lst):
             print(step)
@@ -530,3 +551,6 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=T
             plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="SEAK", impact_date=impact_date, fdate=fdate)
             out_fname = fig_path + 'NPAC_mclimate_F{0}'.format(step)
             plot_mclimate_forecast_four_panel(ds3, fc, step, out_fname, domain="NPAC", impact_date=impact_date, fdate=fdate)
+
+            print("Running gc.collect()")
+            gc.collect()

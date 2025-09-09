@@ -63,14 +63,14 @@ def compare_mclimate_to_forecast(fc, mclimate, varname, F=None):
     return ds
 
 def load_reforecast(date, varname, F=None):
-    path_to_data = '/expanse/nfs/cw3e/cwp140/'
+    path_to_data = '/cw3e/mead/projects/cwp140/data/'
     if varname == 'qpf':
         fname = path_to_data + 'preprocessed/GEFSv12_reforecast/{0}/{1}_{0}.nc'.format(varname, date)
         forecast = xr.open_dataset(fname)
     else:
         ## load all F values
         fname_pattern = path_to_data + 'preprocessed/GEFSv12_reforecast/{0}/{1}_{0}_F*.nc'.format(varname, date)
-        forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested')
+        forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested', decode_timedelta=True)
         forecast  = forecast.sortby("step") # sort by step (forecast lead)
     
     tmp = forecast.step[1::2].values
@@ -114,10 +114,10 @@ def load_mclimate(mon, day, varname, server, F=None):
         
     ## load mclimate data
     if server == 'skyriver':
-        path_to_data = '/data/projects/operations/GEFS_Mclimate/data/' # skyriver
+        path_to_data = f'/data/projects/operations/GEFS_Mclimate/data/{varname}_mclimate/' # skyriver
     elif server == 'expanse':
-        path_to_data = '/expanse/nfs/cw3e/cwp140/preprocessed/' # expanse 
-    fname = path_to_data + '{2}_mclimate/GEFSv12_reforecast_mclimate_{2}_{0}{1}.nc'.format(mon, day, varname)
+        path_to_data = f'/cw3e/mead/projects/cwp140/data/preprocessed/mclimate/{varname}/' # expanse 
+    fname = path_to_data + f'GEFSv12_reforecast_mclimate_{varname}_{mon}{day}.nc'
     # print(fname_pattern)
     ds = xr.open_dataset(fname)
     # ds = ds.sortby("step") # sort by step (forecast lead)
@@ -137,14 +137,15 @@ def load_mclimate(mon, day, varname, server, F=None):
     return ds
 
 def load_archive_GEFS_forecast(date, varname, F=None):
-    print(varname)
-    # fpath = '/expanse/lustre/scratch/dnash/temp_project/preprocessed/GEFS/'
-    fpath = '/expanse/nfs/cw3e/cwp140/preprocessed/GEFS/GEFS/'
+    
     ### load forecast from GEFS
     if varname == 'ivt':
         varname = 'IVT'
     elif varname == 'uv1000':
         varname = 'UV1000'
+
+    print(varname)
+    fpath = f'/cw3e/mead/projects/cwp140/data/preprocessed/GEFS/{varname}/'
     
     if varname == 'qpf':
         ## load single file
@@ -158,7 +159,7 @@ def load_archive_GEFS_forecast(date, varname, F=None):
         else:
             F = str(F).zfill(3)
             fname = fpath + '{0}.t00z.0p50.f{2}.{1}'.format(date, varname, F)
-            forecast = xr.open_dataset(fname)
+            forecast = xr.open_dataset(fname, engine='netcdf4')
         
     forecast = forecast.rename({'longitude': 'lon', 'latitude': 'lat', 
                                   "time": "init_date"}) # need to rename this to match GEFSv12 Reforecast
@@ -242,5 +243,7 @@ def run_compare_mclimate_forecast(varname, fdate, model, server, F=None):
 
     ## compare the mclimate to the reforecast
     ds = compare_mclimate_to_forecast(forecast, mclimate, varname, F)
+    mclimate.close()
+    del mclimate
 
     return forecast, ds

@@ -93,7 +93,7 @@ custom_cmaps =    {
                             [120,86,159]],
                         "bounds":[0, 1, 2, 3, 4, 5, 6],
                         "ticks":[0, 1, 2, 3, 4, 5],
-                        "label": 'AR Impact Index',
+                        "label": 'AR Hazard Index',
                         },
 }
 
