@@ -348,14 +348,6 @@ def plot_mclimate_forecast_four_panel(ds, fc, step, fname, domain, impact_date, 
     print(' ...... creating dataframe with maximum values ...')
     df, init_time, date_lbl = create_dataframe_max_values(ds)
 
-    ## save as csv
-    out_path = path_to_data+'mclimate_csv/'
-    # Ensure directory exists
-    output_dir = os.path.dirname(out_path)
-    os.makedirs(out_path, exist_ok=True)
-    
-    csv_fname = out_path + 'mclimate_init{0}.csv'.format(fdate)
-    df.to_csv(csv_fname, index=True)
     print(' ...... Plotting Heatmaps ...')
     fig = plot_heatmap(fig, gs, df, init_time, date_lbl, fdate)
     print(' ...... Plotting Mclimate maps ...')
