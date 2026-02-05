@@ -51,8 +51,8 @@ def compute_ivt_uv_direction_relative_to_slope(forecast, fdate=None, server='exp
     return ivtdir_diff, uvdir_diff
     
 def compute_AR_duration_AR_impact_index(ds3):
-    ## compute duration of IVT >= 95th percentile
-    AR = xr.where(ds3.ivt >= 0.95, 1, 0)
+    ## compute duration of QPF >= 95th percentile
+    AR = xr.where(ds3.qpf >= 0.95, 1, 0)
     a = AR != 0 # this will place True for all rows where AR is not 0
     
     # get the temporal resolution in hours
