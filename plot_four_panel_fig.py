@@ -40,7 +40,7 @@ def compute_ivt_uv_direction_relative_to_slope(forecast, fdate=None, server='exp
         
     else:
         fname = '/data/projects/operations/GEFS_Mclimate/data/GEFSv12_slope_aspect.nc'
-    aspect = xr.open_dataset(fname)
+    aspect = xr.open_dataset(fname, decode_timedelta=True)
 
     ## calculate different in direction of ivt and uv and aspect
     ivtdir_diff = (forecast.ivtdir-aspect.aspect) % 360
@@ -51,8 +51,8 @@ def compute_ivt_uv_direction_relative_to_slope(forecast, fdate=None, server='exp
     return ivtdir_diff, uvdir_diff
     
 def compute_AR_duration_AR_impact_index(ds3):
-    ## compute duration of QPF >= 95th percentile
-    AR = xr.where(ds3.qpf >= 0.95, 1, 0)
+    ## compute duration of IVT >= 95th percentile
+    AR = xr.where(ds3.ivt >= 0.95, 1, 0)
     a = AR != 0 # this will place True for all rows where AR is not 0
     
     # get the temporal resolution in hours
@@ -503,10 +503,11 @@ def output_compare_mclimate_to_reforecast(fdate, model, impact_date=None, plot=T
         forecast.close()
         
     ### merge the datasets
-    ds3 = xr.merge(ds_lst)
+    print(ds_lst)
+    ds3 = xr.merge(ds_lst, compat='no_conflicts')
     ds3 = ds3.sortby('lat')
     
-    fc = xr.merge(fc_lst)
+    fc = xr.merge(fc_lst, compat='no_conflicts')
     fc = fc.sortby('lat')
     fc = fc.rename({'tp': 'qpf'})
 

@@ -20,6 +20,9 @@ def compare_mclimate_to_forecast(fc, mclimate, varname, F=None):
         varname = 'tp'
     else:
         varname = varname
+
+    print(fc)
+    print(mclimate)
     ## compare IVT forecast to mclimate
     b_lst = []
     quant_lst = [0.  , 0.75, 0.9 , 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.  ]
@@ -57,7 +60,7 @@ def compare_mclimate_to_forecast(fc, mclimate, varname, F=None):
                                 'step': (['step'], steps)})     
         b_lst.append(new_ds)
         
-    ds = xr.merge(b_lst)
+    ds = xr.merge(b_lst, compat='no_conflicts')
     ds = ds.assign_coords({"init_date": (fc.init_date)})
     
     return ds
@@ -66,10 +69,11 @@ def load_reforecast(date, varname, F=None):
     path_to_data = '/cw3e/mead/projects/cwp140/data/'
     if varname == 'qpf':
         fname = path_to_data + 'preprocessed/GEFSv12_reforecast/{0}/{1}_{0}.nc'.format(varname, date)
-        forecast = xr.open_dataset(fname)
+        forecast = xr.open_dataset(fname, decode_timedelta=True)
     else:
         ## load all F values
         fname_pattern = path_to_data + 'preprocessed/GEFSv12_reforecast/{0}/{1}_{0}_F*.nc'.format(varname, date)
+        print(fname_pattern)
         forecast = xr.open_mfdataset(fname_pattern, engine='netcdf4', concat_dim="step", combine='nested', decode_timedelta=True)
         forecast  = forecast.sortby("step") # sort by step (forecast lead)
     
