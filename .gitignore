@@ -83,6 +83,7 @@ auxhist*
 *DATA*
 *.TBL
 *.csv
+*.idx
 
 # no images unless explicitly committed #
 ##################
@@ -94,5 +95,5 @@ auxhist*
 
 # other #
 ##########
-.ipynb_checkpoints/*
-*/.ipynb_checkpoints/*
+**/.ipynb_checkpoints/*
+**/slurm_out/*

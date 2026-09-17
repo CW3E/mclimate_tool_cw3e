@@ -1,0 +1,1 @@
+This is where the general index files for reading the `.grb2` GEFS realtime data are held. This allows for the files to be read quickly for different variables rather than creating the index files on the fly.

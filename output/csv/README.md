@@ -1,0 +1,1 @@
+This is where the aggregate summary data for the heatmaps is saved.

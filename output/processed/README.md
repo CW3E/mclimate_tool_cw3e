@@ -1,0 +1,1 @@
+This is where the intermediate .nc files live after calculating AR Hazard Index so `main_plot.py` will run.
