@@ -8,12 +8,10 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
 from matplotlib.gridspec import GridSpec
 
+from utils import globalvars
 
-def set_cw3e_font(current_dpi, scaling_factor, server='aware'):
-    if server == 'aware':
-        fm.fontManager.addfont('/cw3e/mead/projects/cwp140/repos/mclimate_tool_cw3e/utils/fonts/helvetica.ttc')
-    else:
-        fm.fontManager.addfont('/data/projects/operations/GEFS_Mclimate/utils/fonts/helvetica.ttc')
+def set_cw3e_font(current_dpi, scaling_factor):
+    fm.fontManager.addfont(f'{globalvars.path_to_repo}utils/fonts/helvetica.ttc')
 
     plt.rcParams.update({
                     'font.family' : 'Helvetica',
@@ -34,7 +32,7 @@ def set_cw3e_font(current_dpi, scaling_factor, server='aware'):
                     'lines.markersize': 6 * scaling_factor
                 })
 
-def initialize_figure(server='aware'):
+def initialize_figure():
 
     # Create figure
     fig = plt.figure(figsize=(11.75, 14.))
@@ -44,7 +42,7 @@ def initialize_figure(server='aware'):
     base_dpi=100
     scaling_factor = (fig.dpi/ base_dpi)**0.3
 
-    set_cw3e_font(fig.dpi, scaling_factor, server)
+    set_cw3e_font(fig.dpi, scaling_factor)
     
     nrows = 9
     ncols = 8
