@@ -125,11 +125,13 @@ for domain in "${domains[@]}"; do
 done
 
 # --------------------------------------------------
-# Copy figures to website mirror
+# Copy figures to website mirrors
 # --------------------------------------------------
 
 echo
-echo "Copying figures to website mirror at $(date -u)"
+echo "Copying figures to website mirrors at $(date -u)"
+
+operational_dir="/data/projects/website/mirror/htdocs/Projects/MClimate/images/images_operational"
 
 for domain in "${domains[@]}"; do
 
@@ -140,6 +142,7 @@ for domain in "${domains[@]}"; do
     echo "Domain: ${domain}"
     echo "Source: ${source_dir}"
     echo "Destination: ${destination_dir}"
+    echo "Operational destination: ${operational_dir}"
 
     if [[ ! -d "$source_dir" ]]; then
         echo "ERROR: Source directory does not exist:"
@@ -148,6 +151,7 @@ for domain in "${domains[@]}"; do
     fi
 
     mkdir -p "$destination_dir"
+    mkdir -p "$operational_dir"
 
     # Check whether there are actually PNG files to copy
     shopt -s nullglob
@@ -191,15 +195,14 @@ for domain in "${domains[@]}"; do
         exit 1
     fi
 
-done
+    # --------------------------------------------------
+    # Copy renamed files to operational image directory
+    # --------------------------------------------------
 
-# --------------------------------------------------
-# Copy renamed files to operational image directory - DELETE THIS AFTER NEW WEBSITE HAS LAUNCHED
-# --------------------------------------------------
-operational_dir="/data/projects/website/mirror/htdocs/Projects/MClimate/images/images_operational"
-for domain in "${domains[@]}"; do    
+    echo "Copying renamed operational images for ${domain}..."
+
     for source_file in "${png_files[@]}"; do
-    
+
         filename=$(basename "$source_file")
     
         if [[ "$filename" =~ __F([0-9]{3})\.png$ ]]; then
@@ -237,6 +240,10 @@ for domain in "${domains[@]}"; do
         fi
     
     done
+
+    echo "Finished copying ${domain} figures."
+
+done
 
 echo
 echo "GEFS MClimate completed successfully at $(date -u)"
