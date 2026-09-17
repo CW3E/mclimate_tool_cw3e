@@ -100,7 +100,8 @@ if source == "realtime":
         )
     
     total = time.perf_counter() - t00
-    
+
+    print(f"\nTotal time to create index files: {total:.2f} s")
     print("\nIndividual times:")
     for F, elapsed in results:
         print(f"F{F:03d}: {elapsed:.2f} s")

@@ -25,8 +25,6 @@ def convert_leadtime_to_integer_hours(ds):
         lead_time=ds.lead_time.astype(int)
     )
 
-    print(ds)
-
     return ds
 
 def clean_datetime_attrs(ds):

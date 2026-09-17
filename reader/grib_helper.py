@@ -158,6 +158,6 @@ def dataset_from_subindex(subindex):
     # Decode GRIB Unix timestamps
     for coord in ["time", "valid_time"]:
         if coord in xr_ds:
-            xr_ds[coord] = xr_ds[coord].astype("datetime64[s]")
+            xr_ds[coord] = xr_ds[coord].astype("datetime64[ns]")
 
     return xr_ds
