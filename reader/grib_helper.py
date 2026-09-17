@@ -106,7 +106,7 @@ def build_and_save_index_files(F, init_date):
     fname = os.path.join(
         globalvars.GEFS_REALTIME_DIR,
         init_date,
-        f"gefs_2026091406_F{F:03d}.grb2",
+        f"gefs_{init_date}_F{F:03d}.grb2",
     )
 
     indexpath = os.path.join(globalvars.GEFS_REALTIME_INDEX_DIR,
