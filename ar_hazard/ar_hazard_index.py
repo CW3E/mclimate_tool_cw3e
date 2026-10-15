@@ -72,10 +72,12 @@ def compute_AR_hazard_index(ds):
     AR3 = xr.where(ds.uv >= 0.95, 0.5, 0.0)
 
     ## +0.5 Index Point for IVT direction opposing aspect
-    AR6 = xr.where(ds.ivtdir_diff <= 150, 0.5, 0.0)
+    dir1 = ((ds.ivtdir_diff <= 150) & (ds.ivt >= 0.95))
+    AR6 = xr.where(dir1, 0.5, 0.0)
     
     ## +0.5 Index Point for UV direction opposing aspect
-    AR7 = xr.where(ds.uvdir_diff <= 150, 0.5, 0.0)
+    dir2 = ((ds.uvdir_diff <= 150) & (ds.uv >= 0.95))
+    AR7 = xr.where(dir2, 0.5, 0.0)
 
     # -----------------------------------------
     # Duration

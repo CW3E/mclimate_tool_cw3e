@@ -173,10 +173,23 @@ def plot_variable_panel(fig, gs_loc, domain_cfg, lats_lbl, ds, fc, lead_time, co
 
     # Contour Filled (mclimate values)
     scale = 100. if config_key != "ar_index" else 1
-    data = ds.sel(lead_time=lead_time)[config_key]*scale
+    data = ds.sel(lead_time=lead_time)[config_key] * scale
+    
+    # Mask values <= 0.75 so they are not plotted
+    threshold = 0.75 * scale
+    data = data.where(data > threshold)
+    
     cmap, norm, bnds, cbarticks, cbarlbl = ccmap.cmap(cmap_name)
-    cf = ax.pcolormesh(ds.longitude, ds.latitude, data, transform=datacrs,
-                       cmap=cmap, norm=norm, alpha=0.9)
+    
+    cf = ax.pcolormesh(
+        ds.longitude,
+        ds.latitude,
+        data,
+        transform=datacrs,
+        cmap=cmap,
+        norm=norm,
+        alpha=0.9
+    )
 
     if config_key != "ar_index":
         # Contour Lines (forecast values)

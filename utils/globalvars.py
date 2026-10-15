@@ -33,6 +33,17 @@ SERVER_CONFIGS = {
             "/data/projects/derived_products/GEFS_IVT/data"
         ),
     },
+
+    "local": {
+        "path_to_data": "/data/projects/operations/GEFS_Mclimate/data/",
+        "path_to_repo": "/home/dnash/repos/mclimate_tool_cw3e/",
+        "GEFS_REALTIME_DIR": (
+            "/data/projects/external_datasets/GEFS/processed"
+        ),
+        "GEFS_REALTIME_IVT_DIR": (
+            "/data/projects/derived_products/GEFS_IVT/data"
+        ),
+    },
 }
 
 
