@@ -84,13 +84,20 @@ def compute_terrain_relative_flow(
 ):
     """
     Compute flow direction relative to terrain aspect.
+    Compute upslope component -1 to 1
     """
 
+        # Upslope component: +1 = directly upslope,
+#                     0 = perpendicular,
+#                    -1 = directly downslope
+
     if "ivtdir_to" in fc:
-        final_ds["ivtdir_diff"] = angular_difference(fc["ivtdir_to"], aspect["aspect"])
+        ivtdir_diff = angular_difference(fc["ivtdir_to"], aspect["aspect"])
+        final_ds["ivt_upslope_component"] = -np.cos(np.deg2rad(ivtdir_diff))
 
     if "uvdir_to" in fc:
-        final_ds["uvdir_diff"] = angular_difference(fc["uvdir_to"], aspect["aspect"])
+        uvdir_diff = angular_difference(fc["uvdir_to"], aspect["aspect"])
+        final_ds["uv_upslope_component"] = -np.cos(np.deg2rad(uvdir_diff))
 
     return final_ds
 

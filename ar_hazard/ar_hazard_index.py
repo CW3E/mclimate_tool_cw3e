@@ -71,12 +71,12 @@ def compute_AR_hazard_index(ds):
     ## +0.5 Index Point for uv >= 95th percentile
     AR3 = xr.where(ds.uv >= 0.95, 0.5, 0.0)
 
-    ## +0.5 Index Point for IVT direction opposing aspect
-    dir1 = ((ds.ivtdir_diff <= 150) & (ds.ivt >= 0.95))
+    ## +0.5 Index Point for IVT upslope flow
+    dir1 = ((ds.ivt_upslope_component >= 0.8) & (ds.ivt >= 0.95))
     AR6 = xr.where(dir1, 0.5, 0.0)
     
-    ## +0.5 Index Point for UV direction opposing aspect
-    dir2 = ((ds.uvdir_diff <= 150) & (ds.uv >= 0.95))
+    ## +0.5 Index Point for UV upslope flow
+    dir2 = ((ds.uv_upslope_component >= 0.8) & (ds.uv >= 0.95))
     AR7 = xr.where(dir2, 0.5, 0.0)
 
     # -----------------------------------------
