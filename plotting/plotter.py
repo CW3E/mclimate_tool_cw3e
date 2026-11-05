@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
+from PIL import Image
 
 from plotting.layout import initialize_figure
 from plotting.labels import format_forecast_titles, add_panel_label, add_annotation_text, panel_label
