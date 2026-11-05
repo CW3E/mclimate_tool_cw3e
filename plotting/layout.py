@@ -36,7 +36,7 @@ def initialize_figure():
 
     # Create figure
     fig = plt.figure(figsize=(11.75, 14.))
-    fig.dpi = 300
+    fig.dpi = 200
     fmt = 'png'
 
     base_dpi=100

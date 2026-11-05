@@ -18,6 +18,15 @@ from plotting.maps import plot_variable_panel
 from utils import globalvars
 
 path_to_data = globalvars.path_to_data
+
+def reduce_png_colors(input_fname, output_fname):
+    img = Image.open(input_fname)
+    quantized = img.quantize(
+            colors=256,
+            method=2,  # FASTOCTREE
+            dither=Image.FLOYDSTEINBERG
+        )
+    quantized.save(output_fname)
   
 def save_figure(
     fig,
@@ -25,7 +34,7 @@ def save_figure(
     init_date,
     lead_time,
     out_root="output/images/mclimate/v1/GEFS_50",
-    dpi=300,
+    dpi=200,
     filetype="png",
 ):
     """
@@ -62,6 +71,10 @@ def save_figure(
         bbox_inches="tight",
         facecolor="white",
     )
+
+    ## save again with reduced colors
+    reduce_png_colors(input_fname=fname, 
+                      output_fname=fname)
 
     return fname
 
