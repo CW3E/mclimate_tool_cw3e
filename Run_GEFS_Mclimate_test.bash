@@ -27,7 +27,7 @@ copy_retry_sleep=5
 # Date
 # --------------------------------------------------
 
-init_date="2026101606"
+init_date="2026110512"
 
 echo "Running GEFS MClimate for ${init_date}"
 
